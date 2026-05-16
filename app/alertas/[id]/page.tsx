@@ -6,6 +6,7 @@ import { client } from '@/lib/sdk/client'
 import type { RiskLevel } from '@/lib/sdk/types'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
+import { DraftSection } from '@/components/guatevigila/draft-section'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -141,25 +142,10 @@ async function AlertContent({ id }: { id: string }) {
               <h2 className="text-xl font-semibold border-b border-outline-variant pb-1">
                 Borrador de Investigación
               </h2>
-              <button className="bg-primary text-primary-foreground px-6 py-2 text-xs font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity rounded-sm">
-                <span className="material-symbols-outlined filled text-lg">auto_awesome</span>
-                Generar borrador periodístico
-              </button>
             </div>
+
             <div className="bg-surface-container-lowest border border-outline-variant p-8">
-              <textarea
-                readOnly
-                value={alert.draftInvestigation}
-                className="w-full border-none focus:ring-0 text-base text-on-surface leading-relaxed min-h-[240px] bg-transparent resize-none"
-              />
-              <div className="mt-6 pt-6 border-t border-outline-variant flex justify-end gap-4">
-                <button className="text-on-surface-variant text-xs font-semibold hover:text-primary">
-                  Copiar al portapapeles
-                </button>
-                <button className="text-on-surface-variant text-xs font-semibold hover:text-primary">
-                  Exportar PDF
-                </button>
-              </div>
+              <DraftSection alert={alert} />
             </div>
           </section>
         </div>

@@ -973,14 +973,25 @@ export async function getAlertsPage(
   filters: AlertListFilters = {}
 ): Promise<PaginatedAlerts> {
   const snapshot = await getCachedAlertSnapshot()
+  const filteredAlerts = snapshot.alerts.filter((alert) => {
+    if (filters.signal && alert.signalKey !== filters.signal) return false
+    if (filters.year && alert.year !== filters.year) return false
+    if (
+      filters.entity &&
+      !alert.entityName.toLowerCase().includes(filters.entity.toLowerCase())
+    ) {
+      return false
+    }
+    return true
+  })
   const pageSize = Math.max(1, filters.pageSize ?? ALERTS_PAGE_SIZE)
-  const total = snapshot.alerts.length
+  const total = filteredAlerts.length
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const page = Math.min(Math.max(1, filters.page ?? 1), totalPages)
   const start = (page - 1) * pageSize
 
   return {
-    alerts: snapshot.alerts.slice(start, start + pageSize),
+    alerts: filteredAlerts.slice(start, start + pageSize),
     total,
     page,
     pageSize,

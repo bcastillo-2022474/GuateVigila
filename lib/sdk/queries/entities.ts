@@ -9,6 +9,7 @@ import type {
   PaginatedSuppliers,
   RiskLevel,
 } from '../types'
+import { getSupplierDisplayIdentifier } from '../supplier-identity'
 import { getEntityActiveAlertCounts } from './alerts'
 
 const VALID_TENDER_YEAR_FILTER =
@@ -324,6 +325,7 @@ export async function getEntitySuppliers(
       id: `${buyerId}-${supplierId}`,
       supplierId,
       supplierName: row.supplier_name,
+      supplierNit: supplierId ? getSupplierDisplayIdentifier(supplierId) : null,
       contractCount: count,
       totalAmount: amount,
       currency: 'GTQ',

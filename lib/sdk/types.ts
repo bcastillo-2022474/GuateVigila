@@ -94,6 +94,7 @@ export interface SupplierContract {
   id: string
   supplierId: string
   supplierName: string
+  supplierNit: string | null
   contractCount: number
   totalAmount: number
   currency: string
@@ -177,6 +178,9 @@ export interface EntityFilters {
 }
 
 export interface AlertListFilters {
+  signal?: string
+  year?: string
+  entity?: string
   page?: number
   pageSize?: number
 }
