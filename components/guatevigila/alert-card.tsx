@@ -5,6 +5,16 @@ interface AlertCardProps {
   alert: Alert
 }
 
+const SIGNAL_LABELS: Record<string, string> = {
+  single_bidder: 'Proveedor único recurrente',
+  short_deadline: 'Plazo imposible',
+  direct_purchase: 'Abuso compra directa',
+  award_gap: 'Sin contrato formal',
+  failed_tenders: 'Alta tasa de desiertos',
+}
+
+
+
 function getRiskBadgeClasses(riskLevel: RiskLevel): string {
   switch (riskLevel) {
     case 'critical':
@@ -66,7 +76,11 @@ export function AlertCard({ alert }: AlertCardProps) {
               <span className="material-symbols-outlined text-lg">
                 {alert.signalIcon}
               </span>
-              {alert.signalType}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-lg">
+                {SIGNAL_LABELS[alert.signalType] ?? alert.signalType}
+              </span>
             </span>
             <span className="flex items-center gap-1">
               <span className="material-symbols-outlined text-lg">

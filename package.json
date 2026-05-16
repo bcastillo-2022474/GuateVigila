@@ -9,6 +9,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
     "@duckdb/node-api": "1.5.2-r.1",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "1.2.12",

@@ -4,6 +4,7 @@ import {
   AIAssistantButton,
   StatsBar,
   AlertCard,
+  AlertList
 } from '@/components/guatevigila'
 
 export default async function AlertQueuePage() {
@@ -45,12 +46,7 @@ export default async function AlertQueuePage() {
         </div>
 
         {/* Alert List */}
-        <div className="flex flex-col gap-4">
-          {alerts.map((alert) => (
-            <AlertCard key={alert.id} alert={alert} />
-          ))}
-        </div>
-
+        <AlertList alerts={alerts} />
         {/* Spacer for AI button */}
         <div className="h-20" />
       </main>
