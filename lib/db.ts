@@ -1,7 +1,8 @@
 import * as duckdb from '@duckdb/node-api'
 import path from 'path'
 
-const DATA_DIR = '/home/joao/Downloads/gt_2024/2024'
+const DATA_DIR = process.env.OCDS_DATA_DIR
+if (!DATA_DIR) throw new Error('Missing env variable: OCDS_DATA_DIR — see .env.local.example')
 
 const TABLES = [
   'main',
