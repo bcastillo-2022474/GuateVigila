@@ -20,12 +20,9 @@ export const META = {
     'proveedores estado Guatemala',
     'auditoría contratos Guatemala',
   ],
-  ogImage: '/opengraph-image.png',
-  favicon: '/favicon.ico',
-  appleTouchIcon: '/apple-touch-icon.png',
+  ogImage: '/guate-vigila-black.png',
   icons: {
-    icon192: '/logo-192.png',
-    icon512: '/logo-512.png',
+    svg: '/guate-vigila-black.svg',
   },
   robots: {
     index: true,

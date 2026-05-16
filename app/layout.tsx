@@ -40,13 +40,8 @@ export const metadata: Metadata = {
     images: [META.ogImage],
   },
   icons: {
-    icon: [
-      { url: META.favicon, sizes: 'any' },
-      { url: META.icons.icon192, sizes: '192x192', type: 'image/png' },
-      { url: META.icons.icon512, sizes: '512x512', type: 'image/png' },
-    ],
-    shortcut: META.favicon,
-    apple: { url: META.appleTouchIcon, sizes: '180x180' },
+    icon: [{ url: META.icons.svg, type: 'image/svg+xml' }],
+    shortcut: META.icons.svg,
   },
   manifest: '/site.webmanifest',
 }

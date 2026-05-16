@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 interface NavItem {
@@ -37,7 +38,14 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
               </span>
             </Link>
           )}
-          <Link href="/">
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/guate-vigila-black.svg"
+              alt="GuateVigila"
+              width={28}
+              height={28}
+              priority
+            />
             <span className="text-2xl font-bold tracking-tight text-on-surface">
               GuateVigila
             </span>
