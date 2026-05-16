@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Header } from '@/components/guatevigila'
+import { Header } from '@/components/guatevigila/header'
 
 export default function AlertNotFound() {
   return (

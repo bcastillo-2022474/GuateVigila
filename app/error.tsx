@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Header } from '@/components/guatevigila'
+import { Header } from '@/components/guatevigila/header'
 
 export default function GlobalError({
   error,

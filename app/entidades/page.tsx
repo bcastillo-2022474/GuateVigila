@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { SITE, META } from '@/lib/constants/site'
-import { client } from '@/lib/sdk'
+import { client } from '@/lib/sdk/client'
 
 export const metadata: Metadata = {
   title: META.pages.entidades.title,
@@ -14,7 +14,9 @@ export const metadata: Metadata = {
   },
 }
 import type { EntityType } from '@/lib/sdk/types'
-import { Header, StatsBar, AIAssistantButton } from '@/components/guatevigila'
+import { Header } from '@/components/guatevigila/header'
+import { StatsBar } from '@/components/guatevigila/stats-bar'
+import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { EntityList } from '@/components/guatevigila/entity-list'
 import { Building2, FileText, AlertTriangle } from 'lucide-react'
 

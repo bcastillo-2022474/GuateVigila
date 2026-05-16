@@ -6,7 +6,8 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import type { Entity, PaginatedSuppliers } from '@/lib/sdk/types'
-import { MetricCard, RiskBadge } from '@/components/guatevigila'
+import { MetricCard } from '@/components/guatevigila/metric-card'
+import { RiskBadge } from '@/components/guatevigila/risk-badge'
 import { EntityGraph } from './entity-graph'
 import {
   Pagination,

@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { client } from '@/lib/sdk'
-import { Header, AIAssistantButton } from '@/components/guatevigila'
+import { client } from '@/lib/sdk/client'
+import { Header } from '@/components/guatevigila/header'
+import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 
 interface PageProps {
   params: Promise<{ id: string }>

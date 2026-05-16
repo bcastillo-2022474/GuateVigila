@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
-import { client } from '@/lib/sdk'
-import { Header, AIAssistantButton } from '@/components/guatevigila'
+import { client } from '@/lib/sdk/client'
+import { Header } from '@/components/guatevigila/header'
+import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { EntityDetailTabs } from '@/components/guatevigila/entity-detail-tabs'
 
 interface PageProps {

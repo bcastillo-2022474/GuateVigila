@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SITE, META } from '@/lib/constants/site'
-import { client } from '@/lib/sdk'
+import { client } from '@/lib/sdk/client'
 
 export const metadata: Metadata = {
   title: META.pages.proveedores.title,
@@ -13,7 +13,10 @@ export const metadata: Metadata = {
     url: META.pages.proveedores.canonical,
   },
 }
-import { Header, StatsBar, AIAssistantButton, RiskBadge } from '@/components/guatevigila'
+import { Header } from '@/components/guatevigila/header'
+import { StatsBar } from '@/components/guatevigila/stats-bar'
+import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
+import { RiskBadge } from '@/components/guatevigila/risk-badge'
 import { Building, FileText, AlertTriangle, ChevronRight, Search, Filter, Users } from 'lucide-react'
 
 function formatCurrency(amount: number, currency: string): string {

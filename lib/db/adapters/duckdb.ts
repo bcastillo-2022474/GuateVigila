@@ -19,13 +19,11 @@ const TABLES = [
   'sources',
 ] as const
 
-let instance: duckdb.DuckDBInstance | null = null
-let connection: duckdb.DuckDBConnection | null = null
 let ready: Promise<duckdb.DuckDBConnection> | null = null
 
 async function init(): Promise<duckdb.DuckDBConnection> {
-  instance = await duckdb.DuckDBInstance.create(':memory:')
-  connection = await instance.connect()
+  const instance = await duckdb.DuckDBInstance.create(':memory:')
+  const connection = await instance.connect()
 
   for (const table of TABLES) {
     const file = path.join(DATA_DIR, `${table}.csv`)
@@ -37,14 +35,12 @@ async function init(): Promise<duckdb.DuckDBConnection> {
   return connection
 }
 
-export function getDb(): Promise<duckdb.DuckDBConnection> {
+function getDb(): Promise<duckdb.DuckDBConnection> {
   if (!ready) ready = init()
   return ready
 }
 
-export async function query<T = Record<string, unknown>>(
-  sql: string
-): Promise<T[]> {
+export async function query<T = Record<string, unknown>>(sql: string): Promise<T[]> {
   const db = await getDb()
   const result = await db.run(sql)
   const rows = await result.getRowObjectsJS()

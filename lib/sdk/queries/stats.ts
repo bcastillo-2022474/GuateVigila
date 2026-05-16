@@ -1,5 +1,5 @@
 import type { GlobalStats } from '../types'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/index'
 
 export async function getGlobalStats(): Promise<GlobalStats> {
   const [row] = await query<{

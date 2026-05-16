@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SITE, META } from '@/lib/constants/site'
-import { Header } from '@/components/guatevigila'
+import { Header } from '@/components/guatevigila/header'
 import Link from 'next/link'
 
 export const metadata: Metadata = {

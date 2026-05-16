@@ -1,7 +1,11 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { client, type RiskLevel } from '@/lib/sdk'
-import { Header, AIAssistantButton, MetricCard, SupplierContracts } from '@/components/guatevigila'
+import { client } from '@/lib/sdk/client'
+import type { RiskLevel } from '@/lib/sdk/types'
+import { Header } from '@/components/guatevigila/header'
+import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
+import { MetricCard } from '@/components/guatevigila/metric-card'
+import { SupplierContracts } from '@/components/guatevigila/supplier-contracts'
 
 interface PageProps {
   params: Promise<{ id: string }>

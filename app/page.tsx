@@ -1,12 +1,10 @@
 import type { Metadata } from 'next'
 import { SITE, META } from '@/lib/constants/site'
-import { client } from '@/lib/sdk'
-import {
-  Header,
-  AIAssistantButton,
-  StatsBar,
-  AlertCard,
-} from '@/components/guatevigila'
+import { client } from '@/lib/sdk/client'
+import { Header } from '@/components/guatevigila/header'
+import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
+import { StatsBar } from '@/components/guatevigila/stats-bar'
+import { AlertCard } from '@/components/guatevigila/alert-card'
 
 export const metadata: Metadata = {
   title: META.pages.alertas.title,

@@ -1,6 +1,6 @@
 import type { PaginatedSupplierContracts, RiskLevel, Supplier, SupplierContractsFilters, SupplierListItem } from '../types'
 import { mockSuppliers, mockSupplierList } from '../mock-data'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/index'
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 

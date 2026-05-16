@@ -1,5 +1,5 @@
 import type { Entity, EntityFilters, EntityListItem, EntitySuppliersFilters, PaginatedSuppliers, RiskLevel } from '../types'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/index'
 
 function inferType(name: string): EntityListItem['type'] {
   const n = name.toUpperCase()
