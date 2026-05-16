@@ -77,22 +77,29 @@ cd guate-vigila
 pnpm install
 ```
 
-### 2. Descargar los datos
+### 2. Configurar variables de entorno
 
-Los datos provienen de Guatecompras vía el portal OCDS del Ministerio de Finanzas:
+```bash
+cp .env.local.example .env.local
+```
+
+Edita `.env.local` y ajusta `OCDS_DATA_DIR` a donde tengas los CSV (ver paso 3).
+
+### 3. Descargar los datos
+
+Los datos provienen de Guatecompras vía el portal OCDS del Ministerio de Finanzas. Pide el ZIP al equipo o descárgalos directamente:
 
 ```
 https://datos.minfin.gob.gt/dataset/ocds-guatecompras
 ```
 
-Descarga los CSV del año que necesitas (el proyecto usa 2024 por defecto) y colócalos en una carpeta local. Cada año incluye varios archivos: `main.csv`, `awards.csv`, `awards_suppliers.csv`, `contracts.csv`, etc.
+Descomprime y apunta `OCDS_DATA_DIR` a la carpeta que contiene los CSV: `main.csv`, `awards.csv`, `awards_suppliers.csv`, `contracts.csv`, etc.
 
-### 3. Configurar la ruta de datos
-
-En `lib/db.ts`, actualiza `DATA_DIR` con la ruta a tu carpeta de CSV:
-
-```ts
-const DATA_DIR = '/ruta/a/tu/carpeta/2024'
+```bash
+# Ejemplo
+unzip gt_2024.zip -d ~/data/guatevigila
+# Luego en .env.local:
+OCDS_DATA_DIR=/home/tu-usuario/data/guatevigila/2024
 ```
 
 ### 4. Correr en desarrollo

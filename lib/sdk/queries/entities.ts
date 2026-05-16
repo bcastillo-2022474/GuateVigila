@@ -1,5 +1,5 @@
 import type { Entity, EntityFilters, EntityListItem, EntitySuppliersFilters, PaginatedSuppliers, RiskLevel } from '../types'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/index'
 
 function inferType(name: string): EntityListItem['type'] {
   const n = name.toUpperCase()
@@ -53,7 +53,7 @@ export async function getEntities(filters?: EntityFilters): Promise<EntityListIt
       m.buyer_name,
       COUNT(DISTINCT a.id)                                        AS total_awards,
       SUM(a.value_amount)                                         AS total_amount,
-      COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
+      COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
                           THEN a.id END)                          AS single_bidder_count
     FROM main m
     JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
@@ -112,8 +112,8 @@ export async function getEntityById(id: string): Promise<Entity | null> {
         COUNT(DISTINCT a.id)                                           AS total_awards,
         SUM(a.value_amount)                                            AS total_amount,
         COUNT(DISTINCT CASE
-          WHEN m.tender_procurementMethodDetails ILIKE '%Art. 43%'
-            OR m.tender_procurementMethodDetails ILIKE '%Art. 54%'
+          WHEN m."tender_procurementMethodDetails" ILIKE '%Art. 43%'
+            OR m."tender_procurementMethodDetails" ILIKE '%Art. 54%'
           THEN a.id END)                                               AS direct_purchase_count
       FROM main m
       JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
@@ -122,12 +122,12 @@ export async function getEntityById(id: string): Promise<Entity | null> {
 
     query<{ year: number; amount: number }>(`
       SELECT
-        year(m.tender_tenderPeriod_startDate)   AS year,
-        SUM(a.value_amount)                     AS amount
+        EXTRACT(year FROM m."tender_tenderPeriod_startDate")   AS year,
+        SUM(a.value_amount)                                    AS amount
       FROM main m
       JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
       WHERE m.buyer_name = '${safeName}'
-        AND year(m.tender_tenderPeriod_startDate) > 2000
+        AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
       GROUP BY 1
       ORDER BY 1
     `),
@@ -189,7 +189,7 @@ export async function getEntitySuppliers(
 
   const [totalRows, supplierRows] = await Promise.all([
     query<{ total: number }>(`
-      SELECT COUNT(DISTINCT s.id) AS total
+      SELECT COUNT(DISTINCT s.name) AS total
       FROM main m
       JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
       JOIN awards_suppliers s ON s.awards_id = a.id
@@ -198,25 +198,23 @@ export async function getEntitySuppliers(
     `),
 
     query<{
-      supplier_id: string
       supplier_name: string
       contract_count: number
       total_amount: number
       single_bidder_count: number
     }>(`
       SELECT
-        s.id                                                           AS supplier_id,
         s.name                                                         AS supplier_name,
         COUNT(DISTINCT a.id)                                           AS contract_count,
         SUM(a.value_amount)                                            AS total_amount,
-        COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
+        COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
                             THEN a.id END)                             AS single_bidder_count
       FROM main m
       JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
       JOIN awards_suppliers s ON s.awards_id = a.id
       WHERE m.buyer_name = '${safeName}'
         ${searchClause}
-      GROUP BY s.id, s.name
+      GROUP BY s.name
       ORDER BY total_amount DESC
       LIMIT ${PAGE_SIZE} OFFSET ${offset}
     `),
@@ -228,8 +226,8 @@ export async function getEntitySuppliers(
     const amt = Number(r.total_amount)
     const singlePct = count > 0 ? Number(r.single_bidder_count) / count : 0
     return {
-      id: `${id}-${r.supplier_id}`,
-      supplierId: String(r.supplier_id),
+      id: `${id}-${r.supplier_name}`,
+      supplierId: r.supplier_name,
       supplierName: r.supplier_name,
       contractCount: count,
       totalAmount: amt,

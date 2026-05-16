@@ -112,7 +112,7 @@ export interface SupplierContractsFilters {
   page?: number
 }
 
-export interface SupplierContract2 {
+export interface EntityContract {
   id: string
   entityId: string
   entityName: string
@@ -123,7 +123,7 @@ export interface SupplierContract2 {
 }
 
 export interface PaginatedSupplierContracts {
-  contracts: SupplierContract2[]
+  contracts: EntityContract[]
   total: number
   page: number
   pageSize: number

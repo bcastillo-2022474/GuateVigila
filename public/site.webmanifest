@@ -1,0 +1,20 @@
+{
+  "name": "GuateVigila",
+  "short_name": "GuateVigila",
+  "description": "Monitoreo de contrataciones públicas en Guatemala",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#1a1c1e",
+  "icons": [
+    {
+      "src": "/guate-vigila-black.svg",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/guate-vigila-black.png",
+      "type": "image/png"
+    }
+  ]
+}

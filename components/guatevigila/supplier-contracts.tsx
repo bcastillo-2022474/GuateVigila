@@ -6,7 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import type { PaginatedSupplierContracts } from '@/lib/sdk/types'
-import { RiskBadge } from '@/components/guatevigila'
+import { RiskBadge } from '@/components/guatevigila/risk-badge'
 import {
   Pagination,
   PaginationContent,

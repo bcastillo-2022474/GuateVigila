@@ -1,5 +1,5 @@
 import type { GlobalStats } from '../types'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/index'
 
 export async function getGlobalStats(): Promise<GlobalStats> {
   const [row] = await query<{
@@ -11,11 +11,11 @@ export async function getGlobalStats(): Promise<GlobalStats> {
     SELECT
       COUNT(DISTINCT m.ocid)                        AS processes,
       SUM(a.value_amount)                           AS total_amount,
-      MIN(year(m.tender_tenderPeriod_startDate))    AS period_start,
-      MAX(year(m.tender_tenderPeriod_startDate))    AS period_end
+      MIN(EXTRACT(year FROM m."tender_tenderPeriod_startDate"))    AS period_start,
+      MAX(EXTRACT(year FROM m."tender_tenderPeriod_startDate"))    AS period_end
     FROM main m
     JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-    WHERE year(m.tender_tenderPeriod_startDate) > 2000
+    WHERE EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
   `)
 
   return {

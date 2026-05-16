@@ -1,6 +1,6 @@
 import type { PaginatedSupplierContracts, RiskLevel, Supplier, SupplierContractsFilters, SupplierListItem } from '../types'
 import { mockSuppliers, mockSupplierList } from '../mock-data'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/index'
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -56,7 +56,7 @@ export async function getSupplierContracts(
         m.buyer_name                                                   AS entity_name,
         COUNT(DISTINCT a.id)                                           AS contract_count,
         SUM(a.value_amount)                                            AS total_amount,
-        COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
+        COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
                             THEN a.id END)                             AS single_bidder_count
       FROM main m
       JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'

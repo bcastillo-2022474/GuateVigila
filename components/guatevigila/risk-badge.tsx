@@ -1,4 +1,4 @@
-import type { RiskLevel } from '@/lib/sdk'
+import type { RiskLevel } from '@/lib/sdk/types'
 
 interface RiskBadgeProps {
   level: RiskLevel

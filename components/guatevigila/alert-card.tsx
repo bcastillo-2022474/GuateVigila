@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import type { Alert, RiskLevel } from '@/lib/sdk'
+import type { Alert, RiskLevel } from '@/lib/sdk/types'
 
 interface AlertCardProps {
   alert: Alert

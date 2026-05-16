@@ -1,32 +1,20 @@
 'use client'
-
 import {
   useMemo,
   useState,
   useTransition,
   useCallback,
 } from 'react'
-
 import Fuse from 'fuse.js'
-
-import { Search } from 'lucide-react'
-
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-
-import { useDebouncedCallback } from 'use-debounce'
-
-import type { Alert } from '@/lib/sdk/types'
-
-import { AlertCard } from '@/components/guatevigila'
-
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationPrevious,
-  PaginationNext,
-} from '@/components/ui/pagination'
+  useRouter,
+  usePathname,
+  useSearchParams,
+} from 'next/navigation'
+import { useDebouncedCallback } from 'use-debounce'
+import type { Alert } from '@/lib/sdk/types'
+import { AlertCard } from '@/components/guatevigila/alert-card'
 
 const SIGNAL_LABELS: Record<string, string> = {
   single_bidder: 'Proveedor único recurrente',
@@ -42,7 +30,9 @@ interface AlertListProps {
   alerts: Alert[]
 }
 
-export function AlertList({ alerts }: AlertListProps) {
+export function AlertList({
+  alerts,
+}: AlertListProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -54,13 +44,18 @@ export function AlertList({ alerts }: AlertListProps) {
   const year = searchParams.get('year') ?? ''
   const page = Number(searchParams.get('page') ?? '1')
 
-  const [inputEntity, setInputEntity] = useState(entity)
+  const [inputEntity, setInputEntity] =
+    useState(entity)
 
   const pushParams = useCallback(
     (overrides: Record<string, string | null>) => {
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(
+        searchParams.toString()
+      )
 
-      for (const [k, v] of Object.entries(overrides)) {
+      for (const [k, v] of Object.entries(
+        overrides
+      )) {
         if (v === null || v === '') {
           params.delete(k)
         } else {
@@ -80,15 +75,13 @@ export function AlertList({ alerts }: AlertListProps) {
     [router, pathname, searchParams]
   )
 
-  const debouncedSearch = useDebouncedCallback(
-    (value: string) => {
+  const debouncedSearch =
+    useDebouncedCallback((value: string) => {
       pushParams({
         entity: value || null,
         page: null,
       })
-    },
-    300
-  )
+    }, 300)
 
   const fuse = useMemo(() => {
     return new Fuse(alerts, {
@@ -102,7 +95,8 @@ export function AlertList({ alerts }: AlertListProps) {
 
     if (signal) {
       results = results.filter(
-        (alert) => alert.signalType === signal
+        (alert) =>
+          alert.signalType === signal
       )
     }
 
@@ -113,7 +107,9 @@ export function AlertList({ alerts }: AlertListProps) {
     }
 
     if (entity) {
-      results = fuse.search(entity).map((r) => r.item)
+      results = fuse
+        .search(entity)
+        .map((r) => r.item)
     }
 
     return results
@@ -129,27 +125,24 @@ export function AlertList({ alerts }: AlertListProps) {
     filteredAlerts.length / ITEMS_PER_PAGE
   )
 
-  const paginatedAlerts = filteredAlerts.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
-  )
+  const paginatedAlerts =
+    filteredAlerts.slice(
+      (page - 1) * ITEMS_PER_PAGE,
+      page * ITEMS_PER_PAGE
+    )
 
-  const goToPage = (p: number) => {
+  function goToPage(p: number) {
     pushParams({
       page: p === 1 ? null : String(p),
     })
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-        <span className="text-on-surface-variant text-xs font-semibold tracking-widest uppercase">
-          Filtrar por:
-        </span>
-
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* Search */}
-        <div className="relative w-full md:w-[280px]">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
 
           <input
@@ -169,16 +162,24 @@ export function AlertList({ alerts }: AlertListProps) {
           value={signal}
           onChange={(e) => {
             pushParams({
-              signal: e.target.value || null,
+              signal:
+                e.target.value || null,
               page: null,
             })
           }}
           className="px-4 py-2 bg-card border border-border rounded-lg text-sm"
         >
-          <option value="">Todas las señales</option>
+          <option value="">
+            Todas las señales
+          </option>
 
-          {Object.entries(SIGNAL_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
+          {Object.entries(
+            SIGNAL_LABELS
+          ).map(([value, label]) => (
+            <option
+              key={value}
+              value={value}
+            >
               {label}
             </option>
           ))}
@@ -190,7 +191,8 @@ export function AlertList({ alerts }: AlertListProps) {
           value={year}
           onChange={(e) => {
             pushParams({
-              year: e.target.value || null,
+              year:
+                e.target.value || null,
               page: null,
             })
           }}
@@ -199,10 +201,10 @@ export function AlertList({ alerts }: AlertListProps) {
         />
       </div>
 
-      {/* Alerts */}
-      <div className="flex flex-col gap-4">
+      {/* Results */}
+      <div className="space-y-4">
         {paginatedAlerts.length === 0 ? (
-          <div className="bg-surface-container-lowest border border-outline-variant p-10 text-center text-sm text-on-surface-variant">
+          <div className="bg-card border border-border rounded-lg p-10 text-center text-sm text-muted-foreground">
             No se encontraron alertas.
           </div>
         ) : (
@@ -217,54 +219,33 @@ export function AlertList({ alerts }: AlertListProps) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() =>
+              goToPage(page - 1)
+            }
+            disabled={page <= 1}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card disabled:opacity-50"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Anterior
+          </button>
 
-                  if (page > 1) {
-                    goToPage(page - 1)
-                  }
-                }}
-              />
-            </PaginationItem>
+          <div className="text-sm text-muted-foreground">
+            Página {page} de {totalPages}
+          </div>
 
-            {Array.from({ length: totalPages }).map((_, i) => {
-              const p = i + 1
-
-              return (
-                <PaginationItem key={p}>
-                  <PaginationLink
-                    href="#"
-                    isActive={p === page}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      goToPage(p)
-                    }}
-                  >
-                    {p}
-                  </PaginationLink>
-                </PaginationItem>
-              )
-            })}
-
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-
-                  if (page < totalPages) {
-                    goToPage(page + 1)
-                  }
-                }}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+          <button
+            onClick={() =>
+              goToPage(page + 1)
+            }
+            disabled={page >= totalPages}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card disabled:opacity-50"
+          >
+            Siguiente
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       )}
     </div>
   )
