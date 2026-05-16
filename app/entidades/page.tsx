@@ -1,5 +1,18 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import { SITE, META } from '@/lib/constants/site'
 import { client } from '@/lib/sdk'
+
+export const metadata: Metadata = {
+  title: META.pages.entidades.title,
+  description: META.pages.entidades.description,
+  alternates: { canonical: META.pages.entidades.canonical },
+  openGraph: {
+    title: `${META.pages.entidades.title} | ${SITE.name}`,
+    description: META.pages.entidades.description,
+    url: META.pages.entidades.canonical,
+  },
+}
 import type { EntityType } from '@/lib/sdk/types'
 import { Header, StatsBar, AIAssistantButton } from '@/components/guatevigila'
 import { EntityList } from '@/components/guatevigila/entity-list'

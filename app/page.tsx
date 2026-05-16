@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+import { SITE, META } from '@/lib/constants/site'
 import { client } from '@/lib/sdk'
 import {
   Header,
@@ -5,6 +7,25 @@ import {
   StatsBar,
   AlertCard,
 } from '@/components/guatevigila'
+
+export const metadata: Metadata = {
+  title: META.pages.alertas.title,
+  description: META.pages.alertas.description,
+  alternates: { canonical: META.pages.alertas.canonical },
+  openGraph: {
+    title: `${META.pages.alertas.title} | ${SITE.name}`,
+    description: META.pages.alertas.description,
+    url: META.pages.alertas.canonical,
+  },
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.name,
+  description: SITE.description,
+  url: SITE.url,
+}
 
 export default async function AlertQueuePage() {
   const [alerts, stats] = await Promise.all([
@@ -14,6 +35,7 @@ export default async function AlertQueuePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Header />
       <StatsBar
         processesAnalyzed={stats.processesAnalyzed}

@@ -1,5 +1,18 @@
+import type { Metadata } from 'next'
+import { SITE, META } from '@/lib/constants/site'
 import { Header } from '@/components/guatevigila'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: META.pages.faq.title,
+  description: META.pages.faq.description,
+  alternates: { canonical: META.pages.faq.canonical },
+  openGraph: {
+    title: `${META.pages.faq.title} | ${SITE.name}`,
+    description: META.pages.faq.description,
+    url: META.pages.faq.canonical,
+  },
+}
 
 const SIGNALS = [
   {
@@ -67,9 +80,42 @@ const FAQS = [
   },
 ]
 
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: '¿Qué es una alerta en GuateVigila?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Una alerta se genera cuando un par (entidad compradora, proveedor) supera el umbral estadístico en al menos una de las cinco señales de detección. No es una acusación — es el punto de partida de una investigación periodística.' },
+    },
+    {
+      '@type': 'Question',
+      name: '¿De dónde vienen los datos?',
+      acceptedAnswer: { '@type': 'Answer', text: 'De Guatecompras, el sistema oficial de contrataciones públicas de Guatemala, publicados por el Ministerio de Finanzas en formato OCDS (Open Contracting Data Standard) bajo licencia CC BY 4.0.' },
+    },
+    {
+      '@type': 'Question',
+      name: '¿Qué es el score de riesgo?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Un número de 0 a 100 que refleja cuántas señales de riesgo coinciden simultáneamente en un par (entidad, proveedor) y qué tan lejos están del umbral estadístico nacional.' },
+    },
+    {
+      '@type': 'Question',
+      name: '¿GuateVigila acusa a alguien de corrupción?',
+      acceptedAnswer: { '@type': 'Answer', text: 'No. GuateVigila detecta patrones estadísticos, no delitos. La interpretación y conclusiones son responsabilidad del periodista o investigador.' },
+    },
+    {
+      '@type': 'Question',
+      name: '¿Necesito cuenta para usar GuateVigila?',
+      acceptedAnswer: { '@type': 'Answer', text: 'No. Todo el contenido es público y accesible sin registro.' },
+    },
+  ],
+}
+
 export default function FaqPage() {
   return (
     <div className="min-h-screen bg-background">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <Header />
 
       <main className="max-w-[1200px] mx-auto px-4 md:px-16 py-12 pt-20">

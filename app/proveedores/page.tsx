@@ -1,5 +1,18 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
+import { SITE, META } from '@/lib/constants/site'
 import { client } from '@/lib/sdk'
+
+export const metadata: Metadata = {
+  title: META.pages.proveedores.title,
+  description: META.pages.proveedores.description,
+  alternates: { canonical: META.pages.proveedores.canonical },
+  openGraph: {
+    title: `${META.pages.proveedores.title} | ${SITE.name}`,
+    description: META.pages.proveedores.description,
+    url: META.pages.proveedores.canonical,
+  },
+}
 import { Header, StatsBar, AIAssistantButton, RiskBadge } from '@/components/guatevigila'
 import { Building, FileText, AlertTriangle, ChevronRight, Search, Filter, Users } from 'lucide-react'
 
