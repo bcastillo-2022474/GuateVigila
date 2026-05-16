@@ -175,6 +175,19 @@ export interface EntityListItem {
   riskLevel: RiskLevel
 }
 
+export interface SupplierFilters {
+  q?: string
+  page?: number
+}
+
+export interface PaginatedSupplierList {
+  suppliers: SupplierListItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
 // Supplier List Item (for explorer view)
 export interface SupplierListItem {
   id: string
@@ -216,7 +229,7 @@ export interface GuateVigilaSDK {
   getEntitySuppliers(id: string, filters?: EntitySuppliersFilters): Promise<PaginatedSuppliers>
   
   // Suppliers
-  getSuppliers(): Promise<SupplierListItem[]>
+  getSuppliers(filters?: SupplierFilters): Promise<PaginatedSupplierList>
   getSupplierById(id: string): Promise<Supplier | null>
   getSupplierContracts(id: string, filters?: SupplierContractsFilters): Promise<PaginatedSupplierContracts>
   
