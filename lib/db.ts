@@ -1,0 +1,51 @@
+import * as duckdb from '@duckdb/node-api'
+import path from 'path'
+
+const DATA_DIR = '/home/joao/Downloads/gt_2024/2024'
+
+const TABLES = [
+  'main',
+  'awards',
+  'awards_suppliers',
+  'contracts',
+  'bids_details',
+  'bids_details_tenderers',
+  'tender_tenderers',
+  'tender_items',
+  'tender_items_attributes',
+  'parties',
+  'parties_memberOf',
+  'sources',
+] as const
+
+let instance: duckdb.DuckDBInstance | null = null
+let connection: duckdb.DuckDBConnection | null = null
+let ready: Promise<duckdb.DuckDBConnection> | null = null
+
+async function init(): Promise<duckdb.DuckDBConnection> {
+  instance = await duckdb.DuckDBInstance.create(':memory:')
+  connection = await instance.connect()
+
+  for (const table of TABLES) {
+    const file = path.join(DATA_DIR, `${table}.csv`)
+    await connection.run(
+      `CREATE TABLE ${table} AS SELECT * FROM read_csv_auto('${file}')`
+    )
+  }
+
+  return connection
+}
+
+export function getDb(): Promise<duckdb.DuckDBConnection> {
+  if (!ready) ready = init()
+  return ready
+}
+
+export async function query<T = Record<string, unknown>>(
+  sql: string
+): Promise<T[]> {
+  const db = await getDb()
+  const result = await db.run(sql)
+  const rows = await result.getRowObjectsJS()
+  return rows as T[]
+}

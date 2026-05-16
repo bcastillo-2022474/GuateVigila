@@ -120,12 +120,18 @@ export interface GlobalStats {
   activeAlerts: number
 }
 
+export type EntityType = 'ministerio' | 'municipalidad' | 'instituto' | 'secretaria'
+
+export interface EntityFilters {
+  type?: EntityType[]
+}
+
 // Entity List Item (for explorer view)
 export interface EntityListItem {
   id: string
   name: string
   shortName: string
-  type: 'ministerio' | 'municipalidad' | 'instituto' | 'secretaria'
+  type: EntityType
   totalContracts: number
   totalAmount: number
   currency: string
@@ -154,7 +160,7 @@ export interface GuateVigilaSDK {
   getAlertById(id: string): Promise<AlertDetail | null>
   
   // Entities
-  getEntities(): Promise<EntityListItem[]>
+  getEntities(filters?: EntityFilters): Promise<EntityListItem[]>
   getEntityById(id: string): Promise<Entity | null>
   
   // Suppliers
