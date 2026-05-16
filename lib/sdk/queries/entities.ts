@@ -1,4 +1,4 @@
-import type { Entity, EntityFilters, EntityListItem, EntitySuppliersFilters, PaginatedSuppliers, RiskLevel } from '../types'
+import type { Entity, EntityFilters, EntityListItem, EntitySuppliersFilters, PaginatedEntityList, PaginatedSuppliers, RiskLevel } from '../types'
 import { query } from '@/lib/db/index'
 
 function inferType(name: string): EntityListItem['type'] {
@@ -40,34 +40,77 @@ function riskLevel(singleBidderPct: number, totalAmount: number): RiskLevel {
   return 'low'
 }
 
-export async function getEntities(filters?: EntityFilters): Promise<EntityListItem[]> {
-  const rows = await query<{
-    buyer_id: string
-    buyer_name: string
-    total_awards: number
-    total_amount: number
-    single_bidder_count: number
-  }>(`
-    SELECT
-      m.buyer_id,
-      m.buyer_name,
-      COUNT(DISTINCT a.id)                                        AS total_awards,
-      SUM(a.value_amount)                                         AS total_amount,
-      COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
-                          THEN a.id END)                          AS single_bidder_count
-    FROM main m
-    JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-    WHERE m.buyer_name IS NOT NULL
-    GROUP BY m.buyer_id, m.buyer_name
-    ORDER BY total_amount DESC
-    LIMIT 200
-  `)
+const PAGE_SIZE_LIST = 20
 
-  const mapped = rows.map((r) => {
+export async function getEntities(filters: EntityFilters = {}): Promise<PaginatedEntityList> {
+  const page = Math.max(1, filters.page ?? 1)
+  const offset = (page - 1) * PAGE_SIZE_LIST
+
+  const searchClause = filters.q?.trim()
+    ? `AND m.buyer_name ILIKE '%${filters.q.trim().replace(/'/g, "''")}%'`
+    : ''
+
+  const typeNames: Record<string, string[]> = {
+    municipalidad: ['MUNICIPALIDAD', 'MANCOMUNIDAD'],
+    ministerio: ['MINISTERIO'],
+    secretaria: ['SECRETAR'],
+  }
+  let typeClause = ''
+  if (filters.type && filters.type.length > 0) {
+    const conditions = filters.type.flatMap((t) => {
+      if (t === 'instituto') return []
+      return (typeNames[t] ?? []).map((kw) => `m.buyer_name ILIKE '%${kw}%'`)
+    })
+    const hasInstituto = filters.type.includes('instituto')
+    if (hasInstituto && conditions.length > 0) {
+      const notOthers = Object.values(typeNames).flat().map((kw) => `m.buyer_name NOT ILIKE '%${kw}%'`).join(' AND ')
+      typeClause = `AND (${conditions.join(' OR ')} OR (${notOthers}))`
+    } else if (hasInstituto) {
+      const notOthers = Object.values(typeNames).flat().map((kw) => `m.buyer_name NOT ILIKE '%${kw}%'`).join(' AND ')
+      typeClause = `AND (${notOthers})`
+    } else if (conditions.length > 0) {
+      typeClause = `AND (${conditions.join(' OR ')})`
+    }
+  }
+
+  const baseWhere = `WHERE m.buyer_name IS NOT NULL ${searchClause} ${typeClause}`
+
+  const [totalRows, rows] = await Promise.all([
+    query<{ total: number }>(`
+      SELECT COUNT(DISTINCT m.buyer_name) AS total
+      FROM main m
+      JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
+      ${baseWhere}
+    `),
+
+    query<{
+      buyer_id: string
+      buyer_name: string
+      total_awards: number
+      total_amount: number
+      single_bidder_count: number
+    }>(`
+      SELECT
+        m.buyer_id,
+        m.buyer_name,
+        COUNT(DISTINCT a.id)                                        AS total_awards,
+        SUM(a.value_amount)                                         AS total_amount,
+        COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
+                            THEN a.id END)                          AS single_bidder_count
+      FROM main m
+      JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
+      ${baseWhere}
+      GROUP BY m.buyer_id, m.buyer_name
+      ORDER BY total_amount DESC
+      LIMIT ${PAGE_SIZE_LIST} OFFSET ${offset}
+    `),
+  ])
+
+  const total = Number(totalRows[0]?.total ?? 0)
+  const entities: EntityListItem[] = rows.map((r) => {
     const amount = Number(r.total_amount)
     const awards = Number(r.total_awards)
     const singlePct = awards > 0 ? Number(r.single_bidder_count) / awards : 0
-
     return {
       id: String(r.buyer_id ?? r.buyer_name),
       name: r.buyer_name,
@@ -81,12 +124,7 @@ export async function getEntities(filters?: EntityFilters): Promise<EntityListIt
     }
   })
 
-  if (filters?.type && filters.type.length > 0) {
-    const allowed = new Set(filters.type)
-    return mapped.filter((e) => allowed.has(e.type))
-  }
-
-  return mapped
+  return { entities, total, page, pageSize: PAGE_SIZE_LIST, totalPages: Math.ceil(total / PAGE_SIZE_LIST) }
 }
 
 export async function getEntityById(id: string): Promise<Entity | null> {
@@ -198,6 +236,7 @@ export async function getEntitySuppliers(
     `),
 
     query<{
+      ocds_id: string
       supplier_name: string
       supplier_nit: string | null
       contract_count: number
@@ -205,8 +244,9 @@ export async function getEntitySuppliers(
       single_bidder_count: number
     }>(`
       SELECT
+        MAX(s.id)                                                      AS ocds_id,
         s.name                                                         AS supplier_name,
-        MAX(p.identifier_id)                                           AS supplier_nit,
+        REPLACE(MAX(s.id), 'GT-NIT-', '')                             AS supplier_nit,
         COUNT(DISTINCT a.id)                                           AS contract_count,
         SUM(a.value_amount)                                            AS total_amount,
         COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
@@ -214,9 +254,6 @@ export async function getEntitySuppliers(
       FROM main m
       JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
       JOIN awards_suppliers s ON s.awards_id = a.id
-      LEFT JOIN parties p     ON p.main_ocid = s.main_ocid
-                              AND p.name = s.name
-                              AND p.identifier_scheme = 'GT-NIT'
       WHERE m.buyer_name = '${safeName}'
         ${searchClause}
       GROUP BY s.name
@@ -232,7 +269,7 @@ export async function getEntitySuppliers(
     const singlePct = count > 0 ? Number(r.single_bidder_count) / count : 0
     return {
       id: `${id}-${r.supplier_name}`,
-      supplierId: r.supplier_name,
+      supplierId: String(r.ocds_id),
       supplierName: r.supplier_name,
       supplierNit: r.supplier_nit ?? null,
       contractCount: count,

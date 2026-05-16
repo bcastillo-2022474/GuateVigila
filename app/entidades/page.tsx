@@ -7,7 +7,6 @@ import { Header } from '@/components/guatevigila/header'
 import { StatsBar } from '@/components/guatevigila/stats-bar'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { EntityList } from '@/components/guatevigila/entity-list'
-import { Building2, FileText, AlertTriangle } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: META.pages.entidades.title,
@@ -36,64 +35,17 @@ async function StatsBarLoader() {
   return <StatsBar stats={stats} />
 }
 
-async function EntidadesContent({ types, q, initialPage }: { types: EntityType[]; q: string; initialPage: number }) {
-  const entities = await client.getEntities(types.length > 0 ? { type: types } : undefined)
-  const totalContracts = entities.reduce((sum, e) => sum + e.totalContracts, 0)
-  const totalAlerts = entities.reduce((sum, e) => sum + e.activeAlerts, 0)
-
-  return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Entidades Monitoreadas</p>
-              <p className="text-xl font-semibold text-foreground">{entities.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Adjudicaciones Analizadas</p>
-              <p className="text-xl font-semibold text-foreground">{totalContracts.toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Alertas Activas</p>
-              <p className="text-xl font-semibold text-foreground">{totalAlerts}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <EntityList entities={entities} initialQ={q} initialTypes={types} initialPage={initialPage} />
-    </>
-  )
+async function EntidadesContent({ types, q, page }: { types: EntityType[]; q: string; page: number }) {
+  const result = await client.getEntities({ q: q || undefined, type: types.length > 0 ? types : undefined, page })
+  return <EntityList result={result} q={q} activeTypes={types} />
 }
 
 function ContentSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />
-        ))}
-      </div>
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
+    <div className="space-y-4 animate-pulse">
+      <div className="h-10 w-full bg-surface-container-low rounded-sm" />
+      {Array.from({ length: 10 }).map((_, i) => (
+        <div key={i} className="h-16 bg-surface-container-low rounded-sm" />
       ))}
     </div>
   )
@@ -121,16 +73,16 @@ export default async function EntidadesPage({ searchParams }: PageProps) {
         <StatsBarLoader />
       </Suspense>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-[1200px] mx-auto px-4 md:px-16 py-12">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground mb-2">Explorador de Entidades</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-5xl font-bold text-primary tracking-tight mb-2">Entidades</h1>
+          <p className="text-on-surface-variant">
             Directorio de entidades gubernamentales bajo monitoreo de GuateVigila
           </p>
         </div>
 
         <Suspense fallback={<ContentSkeleton />}>
-          <EntidadesContent types={types} q={q} initialPage={initialPage} />
+          <EntidadesContent types={types} q={q} page={initialPage} />
         </Suspense>
       </main>
 

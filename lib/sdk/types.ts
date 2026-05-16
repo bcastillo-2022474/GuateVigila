@@ -159,7 +159,17 @@ export interface GlobalStats {
 export type EntityType = 'ministerio' | 'municipalidad' | 'instituto' | 'secretaria'
 
 export interface EntityFilters {
+  q?: string
   type?: EntityType[]
+  page?: number
+}
+
+export interface PaginatedEntityList {
+  entities: EntityListItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 // Entity List Item (for explorer view)
@@ -224,7 +234,7 @@ export interface GuateVigilaSDK {
   getAlertById(id: string): Promise<AlertDetail | null>
   
   // Entities
-  getEntities(filters?: EntityFilters): Promise<EntityListItem[]>
+  getEntities(filters?: EntityFilters): Promise<PaginatedEntityList>
   getEntityById(id: string): Promise<Entity | null>
   getEntitySuppliers(id: string, filters?: EntitySuppliersFilters): Promise<PaginatedSuppliers>
   

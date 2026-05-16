@@ -2,6 +2,18 @@ import type { PaginatedSupplierContracts, PaginatedSupplierList, RiskLevel, Supp
 import { query } from '@/lib/db/index'
 
 const PAGE_SIZE_LIST = 50
+const PAGE_SIZE = 15
+
+function riskLevel(singleBidderPct: number, totalAmount: number): RiskLevel {
+  if (singleBidderPct > 0.8 && totalAmount > 500_000_000) return 'critical'
+  if (singleBidderPct > 0.7 || totalAmount > 1_000_000_000) return 'high'
+  if (singleBidderPct > 0.5) return 'medium'
+  return 'low'
+}
+
+function displayNit(ocdsId: string): string {
+  return ocdsId.replace('GT-NIT-', '').replace('GT-GCID-', '')
+}
 
 export async function getSuppliers(filters: SupplierFilters = {}): Promise<PaginatedSupplierList> {
   const page = Math.max(1, filters.page ?? 1)
@@ -21,29 +33,32 @@ export async function getSuppliers(filters: SupplierFilters = {}): Promise<Pagin
     `),
 
     query<{
-      supplier_id: string
+      ocds_id: string
       supplier_name: string
       total_contracts: number
       total_amount: number
       client_entities: number
       single_bidder_count: number
     }>(`
-      SELECT
-        s.name                                                        AS supplier_name,
-        MAX(s.id)                                                     AS supplier_id,
-        COUNT(DISTINCT a.id)                                          AS total_contracts,
-        SUM(a.value_amount)                                           AS total_amount,
-        COUNT(DISTINCT m.buyer_id)                                    AS client_entities,
-        COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
-                            THEN a.id END)                            AS single_bidder_count
-      FROM awards_suppliers s
-      JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
-      JOIN main m   ON m.ocid = a.main_ocid
-      WHERE EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
-        ${searchClause}
-      GROUP BY s.name
-      ORDER BY total_amount DESC
-      LIMIT ${PAGE_SIZE_LIST} OFFSET ${offset}
+      SELECT DISTINCT ON (ocds_id) *
+      FROM (
+        SELECT
+          MAX(s.id)                                                     AS ocds_id,
+          s.name                                                        AS supplier_name,
+          COUNT(DISTINCT a.id)                                          AS total_contracts,
+          SUM(a.value_amount)                                           AS total_amount,
+          COUNT(DISTINCT m.buyer_id)                                    AS client_entities,
+          COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
+                              THEN a.id END)                            AS single_bidder_count
+        FROM awards_suppliers s
+        JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
+        JOIN main m   ON m.ocid = a.main_ocid
+        WHERE EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
+          ${searchClause}
+        GROUP BY s.name
+        ORDER BY total_amount DESC
+        LIMIT ${PAGE_SIZE_LIST} OFFSET ${offset}
+      ) sub
     `),
   ])
 
@@ -52,10 +67,11 @@ export async function getSuppliers(filters: SupplierFilters = {}): Promise<Pagin
     const totalContracts = Number(r.total_contracts)
     const totalAwarded = Number(r.total_amount)
     const singleBidderPct = totalContracts > 0 ? Number(r.single_bidder_count) / totalContracts : 0
+    const ocdsId = String(r.ocds_id)
     return {
-      id: String(r.supplier_name),
+      id: ocdsId,
       name: String(r.supplier_name),
-      nit: String(r.supplier_id).replace('GT-NIT-', ''),
+      nit: displayNit(ocdsId),
       industry: 'General',
       totalContracts,
       totalAwarded,
@@ -74,7 +90,7 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
 
   const [summaryRows, yearlyRows, cowinnerRows] = await Promise.all([
     query<{
-      supplier_id: string
+      ocds_id: string
       supplier_name: string
       total_awards: number
       total_amount: number
@@ -82,8 +98,8 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
       single_bidder_count: number
     }>(`
       SELECT
+        MAX(s.id)                                                     AS ocds_id,
         s.name                                                        AS supplier_name,
-        MAX(s.id)                                                     AS supplier_id,
         COUNT(DISTINCT a.id)                                          AS total_awards,
         SUM(a.value_amount)                                           AS total_amount,
         COUNT(DISTINCT m.buyer_id)                                    AS client_entities,
@@ -92,42 +108,36 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
       FROM awards_suppliers s
       JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
       JOIN main m   ON m.ocid = a.main_ocid
-      WHERE s.name = '${safeId}'
+      WHERE s.id = '${safeId}'
         AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
       GROUP BY s.name
     `),
 
-    query<{
-      year: number
-      contract_count: number
-      amount: number
-    }>(`
+    query<{ year: number; contract_count: number; amount: number }>(`
       SELECT
-        EXTRACT(year FROM m."tender_tenderPeriod_startDate")   AS year,
-        COUNT(DISTINCT a.id)                    AS contract_count,
-        SUM(a.value_amount)                     AS amount
+        EXTRACT(year FROM m."tender_tenderPeriod_startDate") AS year,
+        COUNT(DISTINCT a.id)                                 AS contract_count,
+        SUM(a.value_amount)                                  AS amount
       FROM awards_suppliers s
       JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
       JOIN main m   ON m.ocid = a.main_ocid
-      WHERE s.name = '${safeId}'
+      WHERE s.id = '${safeId}'
         AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
       GROUP BY 1
       ORDER BY 1
     `),
 
-    query<{
-      competitor_name: string
-      shared_tenders: number
-    }>(`
+    query<{ competitor_id: string; competitor_name: string; shared_tenders: number }>(`
       SELECT
-        s2.name                   AS competitor_name,
-        COUNT(DISTINCT m.ocid)    AS shared_tenders
+        MAX(s2.id)                          AS competitor_id,
+        s2.name                             AS competitor_name,
+        COUNT(DISTINCT m.ocid)              AS shared_tenders
       FROM awards_suppliers s1
       JOIN awards a1 ON a1.id = s1.awards_id AND a1.status = 'active'
       JOIN main m    ON m.ocid = a1.main_ocid
       JOIN awards a2 ON a2.main_ocid = m.ocid AND a2.status = 'active'
-      JOIN awards_suppliers s2 ON s2.awards_id = a2.id AND s2.name != '${safeId}'
-      WHERE s1.name = '${safeId}'
+      JOIN awards_suppliers s2 ON s2.awards_id = a2.id AND s2.id != '${safeId}'
+      WHERE s1.id = '${safeId}'
         AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
       GROUP BY s2.name
       ORDER BY shared_tenders DESC
@@ -140,6 +150,7 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
 
   const totalAwards = Number(summary.total_awards)
   const singleBidderCount = Number(summary.single_bidder_count)
+  const ocdsId = String(summary.ocds_id)
   const years = yearlyRows.map((r) => ({
     year: Number(r.year),
     amount: Number(r.amount),
@@ -149,9 +160,9 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
   const periodEnd = years[years.length - 1]?.year ?? 2024
 
   return {
-    id: safeId,
+    id: ocdsId,
     name: String(summary.supplier_name),
-    nit: String(summary.supplier_id).replace('GT-NIT-', ''),
+    nit: displayNit(ocdsId),
     industry: 'General',
     totalContracts: totalAwards,
     totalAwarded: Number(summary.total_amount),
@@ -164,22 +175,13 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
     yearlyData: years,
     alerts: [],
     associates: cowinnerRows.map((r) => ({
-      id: String(r.competitor_name),
+      id: String(r.competitor_id),
       name: String(r.competitor_name),
       role: 'Competidor frecuente',
       participation: `${r.shared_tenders} licitaciones en común`,
       otherCompanies: 0,
     })),
   }
-}
-
-const PAGE_SIZE = 15
-
-function riskLevel(singleBidderPct: number, totalAmount: number): RiskLevel {
-  if (singleBidderPct > 0.8 && totalAmount > 500_000_000) return 'critical'
-  if (singleBidderPct > 0.7 || totalAmount > 1_000_000_000) return 'high'
-  if (singleBidderPct > 0.5) return 'medium'
-  return 'low'
 }
 
 export async function getSupplierContracts(
@@ -195,7 +197,7 @@ export async function getSupplierContracts(
 
   const [totalRows, contractRows] = await Promise.all([
     query<{ total: number }>(`
-      SELECT COUNT(DISTINCT m.buyer_id) AS total
+      SELECT COUNT(DISTINCT m.buyer_name) AS total
       FROM main m
       JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
       JOIN awards_suppliers s ON s.awards_id = a.id
@@ -244,11 +246,5 @@ export async function getSupplierContracts(
     }
   })
 
-  return {
-    contracts,
-    total,
-    page,
-    pageSize: PAGE_SIZE,
-    totalPages: Math.ceil(total / PAGE_SIZE),
-  }
+  return { contracts, total, page, pageSize: PAGE_SIZE, totalPages: Math.ceil(total / PAGE_SIZE) }
 }

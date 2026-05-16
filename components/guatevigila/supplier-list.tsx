@@ -89,7 +89,7 @@ export function SupplierList({ result, q }: SupplierListProps) {
           ) : (
             suppliers.map((supplier) => (
               <Link
-                key={supplier.id}
+                key={supplier.name}
                 href={`/proveedores/${encodeURIComponent(supplier.id)}`}
                 className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-6 py-4 hover:bg-surface-container-low transition-colors items-center"
               >
