@@ -12,6 +12,7 @@ const navItems: NavItem[] = [
   { href: '/', label: 'Alertas' },
   { href: '/entidades', label: 'Entidades' },
   { href: '/proveedores', label: 'Proveedores' },
+  { href: '/faq', label: 'Metodología' },
 ]
 
 interface HeaderProps {
@@ -55,9 +56,7 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
         <nav className="hidden md:flex items-center gap-6">
           {navItems.map((item) => {
             const isActive =
-              item.href === '/'
-                ? pathname === '/'
-                : pathname.startsWith(item.href.split('/')[1] === 'entidades' ? '/entidades' : '/proveedores')
+              item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
             return (
               <Link
                 key={item.href}
