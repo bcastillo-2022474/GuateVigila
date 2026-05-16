@@ -1,11 +1,10 @@
 import OpenAI from 'openai'
 
-const minimax = new OpenAI({
-    apiKey: process.env.MINIMAX_API_KEY,
-    baseURL: 'https://api.minimax.io/v1',
-})
-
 export async function POST(req: Request) {
+    const minimax = new OpenAI({
+        apiKey: process.env.MINIMAX_API_KEY,
+        baseURL: 'https://api.minimax.io/v1',
+    })
     try {
         const { alert } = await req.json()
 
