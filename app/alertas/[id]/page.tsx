@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { client } from '@/lib/sdk/client'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
+import { DraftSection } from '@/components/guatevigila/draft-section'
+import { getRiskLabel } from '@/components/guatevigila/alert-card'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -37,7 +39,7 @@ async function AlertContent({ id }: { id: string }) {
       <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-20">
         <div className="max-w-2xl">
           <span className="text-xs font-semibold tracking-widest uppercase text-destructive mb-1 block">
-            Alerta de Riesgo Crítico
+            Alerta de Riesgo {getRiskLabel(alert.riskLevel)}
           </span>
           <h1 className="text-3xl font-bold text-on-surface mb-2">{alert.entityName}</h1>
           <p className="text-on-surface-variant text-base max-w-xl">{alert.description}</p>
@@ -58,7 +60,7 @@ async function AlertContent({ id }: { id: string }) {
           </div>
           <div>
             <span className="text-xs font-semibold block text-on-surface-variant">Score de Riesgo</span>
-            <span className="text-xl font-semibold text-destructive">Crítico</span>
+            <span className="text-xl font-semibold text-destructive">{getRiskLabel(alert.riskLevel)}</span>
           </div>
         </div>
       </section>
@@ -98,25 +100,10 @@ async function AlertContent({ id }: { id: string }) {
               <h2 className="text-xl font-semibold border-b border-outline-variant pb-1">
                 Borrador de Investigación
               </h2>
-              <button className="bg-primary text-primary-foreground px-6 py-2 text-xs font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity rounded-sm">
-                <span className="material-symbols-outlined filled text-lg">auto_awesome</span>
-                Generar borrador periodístico
-              </button>
             </div>
+
             <div className="bg-surface-container-lowest border border-outline-variant p-8">
-              <textarea
-                readOnly
-                value={alert.draftInvestigation}
-                className="w-full border-none focus:ring-0 text-base text-on-surface leading-relaxed min-h-[240px] bg-transparent resize-none"
-              />
-              <div className="mt-6 pt-6 border-t border-outline-variant flex justify-end gap-4">
-                <button className="text-on-surface-variant text-xs font-semibold hover:text-primary">
-                  Copiar al portapapeles
-                </button>
-                <button className="text-on-surface-variant text-xs font-semibold hover:text-primary">
-                  Exportar PDF
-                </button>
-              </div>
+              <DraftSection alert={alert} />
             </div>
           </section>
         </div>
