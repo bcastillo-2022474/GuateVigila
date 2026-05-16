@@ -1,5 +1,8 @@
 import type { Entity, EntityFilters, EntityListItem, RiskLevel } from '../types'
 import { query } from '@/lib/db'
+import { getEntityActiveAlertCounts } from './alerts'
+
+const VALID_TENDER_YEAR_FILTER = 'year(m.tender_tenderPeriod_startDate) > 2000'
 
 function inferType(name: string): EntityListItem['type'] {
   const n = name.toUpperCase()
@@ -41,45 +44,52 @@ function riskLevel(singleBidderPct: number, totalAmount: number): RiskLevel {
 }
 
 export async function getEntities(filters?: EntityFilters): Promise<EntityListItem[]> {
-  const rows = await query<{
-    buyer_id: string
-    buyer_name: string
-    total_awards: number
-    total_amount: number
-    single_bidder_count: number
-  }>(`
-    SELECT
-      m.buyer_id,
-      m.buyer_name,
-      COUNT(DISTINCT a.id)                                        AS total_awards,
-      SUM(a.value_amount)                                         AS total_amount,
-      COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
-                          THEN a.id END)                          AS single_bidder_count
-    FROM main m
-    JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-    WHERE m.buyer_name IS NOT NULL
-    GROUP BY m.buyer_id, m.buyer_name
-    ORDER BY total_amount DESC
-    LIMIT 200
-  `)
+  const [rows, activeAlertCounts] = await Promise.all([
+    query<{
+      buyer_id: string
+      buyer_name: string
+      total_awards: number
+      total_amount: number
+      single_bidder_count: number
+    }>(`
+      SELECT
+        m.buyer_id,
+        m.buyer_name,
+        COUNT(DISTINCT a.id)                                        AS total_awards,
+        SUM(a.value_amount)                                         AS total_amount,
+        COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
+                            THEN a.id END)                          AS single_bidder_count
+      FROM main m
+      JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
+      WHERE m.buyer_id IS NOT NULL
+        AND m.buyer_name IS NOT NULL
+        AND ${VALID_TENDER_YEAR_FILTER}
+      GROUP BY m.buyer_id, m.buyer_name
+      ORDER BY total_amount DESC
+    `),
+    getEntityActiveAlertCounts(),
+  ])
 
-  const mapped = rows.map((r) => {
-    const amount = Number(r.total_amount)
-    const awards = Number(r.total_awards)
-    const singlePct = awards > 0 ? Number(r.single_bidder_count) / awards : 0
+  const mapped = rows
+    .map((r) => {
+      const buyerId = String(r.buyer_id ?? '').trim()
+      const amount = Number(r.total_amount)
+      const awards = Number(r.total_awards)
+      const singlePct = awards > 0 ? Number(r.single_bidder_count) / awards : 0
 
-    return {
-      id: String(r.buyer_id ?? r.buyer_name),
-      name: r.buyer_name,
-      shortName: shortName(r.buyer_name),
-      type: inferType(r.buyer_name),
-      totalContracts: awards,
-      totalAmount: amount,
-      currency: 'GTQ',
-      activeAlerts: 0,
-      riskLevel: riskLevel(singlePct, amount),
-    }
-  })
+      return {
+        id: buyerId,
+        name: r.buyer_name,
+        shortName: shortName(r.buyer_name),
+        type: inferType(r.buyer_name),
+        totalContracts: awards,
+        totalAmount: amount,
+        currency: 'GTQ',
+        activeAlerts: activeAlertCounts.get(buyerId) ?? 0,
+        riskLevel: riskLevel(singlePct, amount),
+      }
+    })
+    .filter((entity) => entity.id)
 
   if (filters?.type && filters.type.length > 0) {
     const allowed = new Set(filters.type)
@@ -91,24 +101,31 @@ export async function getEntities(filters?: EntityFilters): Promise<EntityListIt
 
 export async function getEntityById(id: string): Promise<Entity | null> {
   // Resolve buyer_name from buyer_id (id may be the raw buyer_id value)
-  const nameRows = await query<{ buyer_name: string }>(`
-    SELECT DISTINCT buyer_name
+  const escapedId = id.replace(/'/g, "''")
+  const nameRows = await query<{ buyer_id: string; buyer_name: string }>(`
+    SELECT DISTINCT buyer_id, buyer_name
     FROM main
-    WHERE buyer_id = '${id.replace(/'/g, "''")}'
-       OR buyer_name = '${id.replace(/'/g, "''")}'
+    WHERE buyer_id = '${escapedId}'
+       OR buyer_name = '${escapedId}'
+    ORDER BY CASE WHEN buyer_id = '${escapedId}' THEN 0 ELSE 1 END, buyer_name
     LIMIT 1
   `)
   if (nameRows.length === 0) return null
+  const rawBuyerId = String(nameRows[0].buyer_id ?? '').trim()
+  const buyerId = rawBuyerId || id
   const buyerName = nameRows[0].buyer_name
   const safeName = buyerName.replace(/'/g, "''")
+  const safeBuyerId = buyerId.replace(/'/g, "''")
+  const entityFilter = rawBuyerId
+    ? `m.buyer_id = '${safeBuyerId}'`
+    : `m.buyer_name = '${safeName}'`
 
-  const [summaryRows, yearlyRows, supplierRows] = await Promise.all([
+  const [summaryRows, yearlyRows, supplierRows, activeAlertCounts] = await Promise.all([
     // Summary stats
     query<{
       total_awards: number
       total_amount: number
       direct_purchase_count: number
-      active_alerts: number
     }>(`
       SELECT
         COUNT(DISTINCT a.id)                                           AS total_awards,
@@ -116,11 +133,11 @@ export async function getEntityById(id: string): Promise<Entity | null> {
         COUNT(DISTINCT CASE
           WHEN m.tender_procurementMethodDetails ILIKE '%Art. 43%'
             OR m.tender_procurementMethodDetails ILIKE '%Art. 54%'
-          THEN a.id END)                                               AS direct_purchase_count,
-        0                                                              AS active_alerts
+          THEN a.id END)                                               AS direct_purchase_count
       FROM main m
       JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-      WHERE m.buyer_name = '${safeName}'
+      WHERE ${entityFilter}
+        AND ${VALID_TENDER_YEAR_FILTER}
     `),
 
     // Yearly breakdown
@@ -130,8 +147,8 @@ export async function getEntityById(id: string): Promise<Entity | null> {
         SUM(a.value_amount)                     AS amount
       FROM main m
       JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-      WHERE m.buyer_name = '${safeName}'
-        AND year(m.tender_tenderPeriod_startDate) > 2000
+      WHERE ${entityFilter}
+        AND ${VALID_TENDER_YEAR_FILTER}
       GROUP BY 1
       ORDER BY 1
     `),
@@ -154,11 +171,13 @@ export async function getEntityById(id: string): Promise<Entity | null> {
       FROM main m
       JOIN awards a    ON a.main_ocid = m.ocid AND a.status = 'active'
       JOIN awards_suppliers s ON s.awards_id = a.id
-      WHERE m.buyer_name = '${safeName}'
+      WHERE ${entityFilter}
+        AND ${VALID_TENDER_YEAR_FILTER}
       GROUP BY s.id, s.name
       ORDER BY total_amount DESC
       LIMIT 20
     `),
+    getEntityActiveAlertCounts(),
   ])
 
   if (summaryRows.length === 0) return null
@@ -185,7 +204,7 @@ export async function getEntityById(id: string): Promise<Entity | null> {
     const amt = Number(r.total_amount)
     const singlePct = count > 0 ? Number(r.single_bidder_count) / count : 0
     return {
-      id: `${id}-${r.supplier_id}`,
+      id: `${buyerId}-${r.supplier_id}`,
       supplierId: String(r.supplier_id),
       supplierName: r.supplier_name,
       contractCount: count,
@@ -196,14 +215,14 @@ export async function getEntityById(id: string): Promise<Entity | null> {
   })
 
   return {
-    id,
+    id: buyerId,
     name: buyerName,
     shortName: shortName(buyerName),
     totalContracts: totalAwards,
     totalAmount,
     currency: 'GTQ',
     directPurchasePercentage: directPct,
-    activeAlerts: 0,
+    activeAlerts: activeAlertCounts.get(buyerId) ?? 0,
     yearlyData,
     topSuppliers,
   }

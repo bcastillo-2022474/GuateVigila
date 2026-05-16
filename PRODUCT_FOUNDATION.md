@@ -23,7 +23,7 @@ GuateVigila automatiza las preguntas que los periodistas e investigadores hacen 
 1. **¿Qué proveedores ganan contratos repetidamente en una sola entidad siendo el único oferente?**
    El Estado debería tener competencia real en sus compras. Cuando una empresa gana decenas de contratos en la misma institución y en la mayoría de casos nadie más participó, hay algo que explicar.
 
-2. **¿Qué licitaciones se publicaron con menos de 48 horas de plazo, y quién las ganó?**
+2. **¿Qué licitaciones se publicaron con menos de 72 horas de plazo, y quién las ganó?**
    Está documentado en Guatemala que se publican licitaciones con 1 hora de plazo. Solo puede ganar quien ya sabía que iba a salir. GuateVigila detecta estos casos a escala y revela si hay un proveedor favorecido sistemáticamente.
 
 3. **¿Qué entidades evitan sistemáticamente la licitación abierta y prefieren compra directa?**
@@ -48,7 +48,7 @@ Cada alerta incluye:
 - La entidad y el proveedor involucrados
 - El monto en riesgo
 - Un score de riesgo (más señales coincidentes = mayor riesgo)
-- Links directos a los contratos originales en Guatecompras para verificación
+- Link al Registro Mercantil con NIT prellenado y, cuando la URL puede derivarse con confianza del dataset actual, link directo a Guatecompras para verificación
 - Un borrador de contexto periodístico generado automáticamente con IA
 
 **No reemplazamos al periodista.** Le damos el punto de partida de su investigación, ya armado.
@@ -57,7 +57,7 @@ Cada alerta incluye:
 
 ## Qué es una alerta
 
-Una alerta se crea cuando un par (entidad, proveedor) supera el umbral en al menos una señal de detección. El score de riesgo refleja cuántas señales coinciden simultáneamente:
+Una alerta se crea cuando un par (entidad, proveedor) supera el umbral en al menos una señal de detección. La cola pública muestra una sola alerta por par: si coinciden varias señales, se fusionan en una tarjeta con score acumulado y una señal principal visible. Las señales que nacen a nivel entidad se adjuntan a los pares del comprador que ya son sospechosos; si no existe ninguno, se siembra el proveedor top por monto. El score de riesgo refleja cuántas señales coinciden simultáneamente:
 
 | Score | Color | Significado |
 |---|---|---|
@@ -73,7 +73,7 @@ Una alerta existe mientras el patrón persiste en los datos. Con actualizaciones
 - No acusa ni sentencia. Detecta patrones estadísticos, no delitos.
 - No reemplaza la investigación periodística. La inicia.
 - No requiere cuenta ni registro. Acceso público total, sin fricción.
-- No inventa datos. Todo lo que muestra tiene su fuente original en Guatecompras, con link directo al contrato.
+- No inventa datos. Todo lo que muestra tiene su fuente original en Guatecompras y, cuando la URL puede derivarse de forma confiable, expone el link externo correspondiente.
 
 ---
 
@@ -83,7 +83,7 @@ Una alerta existe mientras el patrón persiste en los datos. Con actualizaciones
 
 Trabaja en medios digitales independientes como Plaza Pública, No Ficción, Prensa Comunitaria u Ojoconmipisto. Tiene intuición periodística sólida pero no tiempo para procesar datos masivos. Su problema no es falta de sospecha sino falta de evidencia estructurada. GuateVigila le da las pistas con la evidencia ya recopilada. Si le ahorra tres semanas de trabajo manual en una investigación, es un éxito.
 
-**Cómo usa el producto:** llega a la cola de alertas, ve qué está ardiendo, hace click en una alerta de alto riesgo, revisa la evidencia, copia el borrador periodístico y abre los contratos en Guatecompras para verificar.
+**Cómo usa el producto:** llega a la cola de alertas, ve qué está ardiendo, hace click en una alerta de alto riesgo, revisa la evidencia, copia el borrador periodístico y sigue los links externos disponibles para verificar.
 
 ### Secundario — El analista de ONG / watchdog
 
@@ -113,16 +113,16 @@ Lista priorizada de alertas activas, ordenadas por score de riesgo. Filtrable po
 ### 2. Detalle de alerta
 La pantalla más importante. Un click desde la cola muestra:
 - Las señales que dispararon la alerta con sus valores concretos
-- El proveedor identificado con su NIT
+- El proveedor identificado con su identificador fiscal o registral
 - El monto total en riesgo
-- Dos acciones directas: ver contratos en Guatecompras (link externo) y buscar en el Registro Mercantil (link con NIT prellenado)
+- Acciones externas condicionales: buscar en el Registro Mercantil con NIT prellenado y, si la URL es derivable de forma confiable, ver contratos en Guatecompras
 - Borrador de contexto periodístico generado por IA
 
 ### 3. Perfil de entidad
 Vista de la institución compradora. Métricas de comportamiento histórico, ranking de proveedores por monto, distribución de modalidades de compra, evolución año a año. Accesible buscando por nombre de entidad.
 
 ### 4. Perfil de proveedor
-Vista del proveedor por NIT o nombre. Historial de contratos por año, en cuántas entidades opera, si creció de forma anómala, cuántas alertas tiene activas. Accesible buscando por nombre o NIT.
+Vista del proveedor por identificador o nombre. Historial de contratos por año, en cuántas entidades opera, si creció de forma anómala, cuántas alertas tiene activas. Accesible buscando por nombre o identificador.
 
 ---
 

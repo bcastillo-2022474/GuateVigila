@@ -22,7 +22,7 @@ export default async function SupplierProfilePage({ params }: PageProps) {
     return `${currency} ${amount.toLocaleString('es-GT')}`
   }
 
-  const maxAmount = Math.max(...supplier.yearlyData.map((d) => d.amount))
+  const maxAmount = Math.max(0, ...supplier.yearlyData.map((d) => d.amount))
 
   const getAlertBorderColor = (severity: RiskLevel) => {
     switch (severity) {
@@ -84,24 +84,26 @@ export default async function SupplierProfilePage({ params }: PageProps) {
             </nav>
             <h1 className="text-3xl font-bold mb-1">{supplier.name}</h1>
             <p className="text-base text-on-surface-variant">
-              NIT: {supplier.nit} • Proveedor de {supplier.industry}
+              Identificador: {supplier.nit} • Proveedor de {supplier.industry}
             </p>
           </div>
           <div className="flex gap-4">
             <button className="bg-primary text-primary-foreground px-6 py-2 rounded-sm text-xs font-semibold hover:opacity-90 transition-opacity">
               Descargar Informe PDF
             </button>
-            <a
-              href="https://www.registromercantil.gob.gt"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border border-outline-variant text-primary px-6 py-2 rounded-sm text-xs font-semibold hover:bg-surface-container-low transition-colors flex items-center gap-2"
-            >
-              Buscar en Registro Mercantil
-              <span className="material-symbols-outlined text-lg">
-                open_in_new
-              </span>
-            </a>
+            {supplier.registroMercantilUrl && (
+              <a
+                href={supplier.registroMercantilUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-outline-variant text-primary px-6 py-2 rounded-sm text-xs font-semibold hover:bg-surface-container-low transition-colors flex items-center gap-2"
+              >
+                Buscar en Registro Mercantil
+                <span className="material-symbols-outlined text-lg">
+                  open_in_new
+                </span>
+              </a>
+            )}
           </div>
         </div>
 
@@ -148,29 +150,35 @@ export default async function SupplierProfilePage({ params }: PageProps) {
                   </span>
                 </div>
               </div>
-              <div className="space-y-6">
-                {supplier.yearlyData.map((data) => {
-                  const widthPercent = (data.amount / maxAmount) * 100
-                  return (
-                    <div key={data.year} className="space-y-1">
-                      <div className="flex justify-between text-xs font-semibold text-on-surface-variant">
-                        <span>{data.year}</span>
-                        <span>
-                          {supplier.currency}{' '}
-                          {(data.amount / 1_000_000).toFixed(1)}M (
-                          {data.contractCount} contratos)
-                        </span>
+              {supplier.yearlyData.length === 0 ? (
+                <p className="text-sm text-on-surface-variant">
+                  Sin histórico anual disponible para este proveedor.
+                </p>
+              ) : (
+                <div className="space-y-6">
+                  {supplier.yearlyData.map((data) => {
+                    const widthPercent = maxAmount > 0 ? (data.amount / maxAmount) * 100 : 0
+                    return (
+                      <div key={data.year} className="space-y-1">
+                        <div className="flex justify-between text-xs font-semibold text-on-surface-variant">
+                          <span>{data.year}</span>
+                          <span>
+                            {supplier.currency}{' '}
+                            {(data.amount / 1_000_000).toFixed(1)}M (
+                            {data.contractCount} contratos)
+                          </span>
+                        </div>
+                        <div className="w-full bg-surface-container-low h-8 rounded-sm overflow-hidden flex">
+                          <div
+                            className="bg-secondary h-full"
+                            style={{ width: `${widthPercent}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full bg-surface-container-low h-8 rounded-sm overflow-hidden flex">
-                        <div
-                          className="bg-secondary h-full"
-                          style={{ width: `${widthPercent}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
+              )}
               <div className="mt-8 pt-6 border-t border-outline-variant flex justify-end">
                 <button className="text-primary text-xs font-semibold flex items-center gap-1 hover:underline">
                   Ver desglose detallado

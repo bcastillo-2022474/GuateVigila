@@ -95,7 +95,7 @@ export function EntityDetailTabs({ entity }: EntityDetailTabsProps) {
             <span className="material-symbols-outlined text-base align-middle mr-1.5" style={{ fontSize: 16 }}>
               table_rows
             </span>
-            Contratos por proveedor (2024)
+            Contratos por proveedor (2020-2024)
           </button>
           <button
             onClick={() => setActiveTab('grafo')}

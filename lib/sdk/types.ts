@@ -3,12 +3,20 @@
 // ===========================================
 
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low'
+export type SignalType =
+  | 'single_bidder'
+  | 'short_deadline'
+  | 'direct_purchase'
+  | 'award_gap'
+  | 'failed_tenders'
 
 export interface Alert {
+  // Stable alert id: {buyer_id}::{supplier_id}::{primary_signal}
   id: string
   entityId: string
   entityName: string
   riskLevel: RiskLevel
+  signalKey: SignalType
   signalType: string
   signalIcon: string
   year: string
@@ -18,6 +26,8 @@ export interface Alert {
 }
 
 export interface AlertDetail {
+  // Detail always resolves to the canonical alert for the pair, even if the route
+  // was opened through a non-primary active signal.
   id: string
   entityId: string
   entityName: string
@@ -33,12 +43,15 @@ export interface AlertDetail {
     year: number
   }
   draftInvestigation: string
+  // External links are only exposed when they can be derived reliably.
+  guatecomprasUrl?: string
+  registroMercantilUrl?: string
   networkMapUrl?: string
 }
 
 export interface Signal {
   id: string
-  type: string
+  type: SignalType
   title: string
   description: string
   icon: string
@@ -78,6 +91,7 @@ export interface SupplierContract {
 export interface Supplier {
   id: string
   name: string
+  // Kept for compatibility; in practice this is the supplier identifier shown in the UI.
   nit: string
   industry: string
   totalContracts: number
@@ -93,6 +107,7 @@ export interface Supplier {
   }[]
   alerts: SupplierAlert[]
   associates: Associate[]
+  registroMercantilUrl?: string
 }
 
 export interface SupplierAlert {

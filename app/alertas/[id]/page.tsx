@@ -23,6 +23,37 @@ export default async function AlertDetailPage({ params }: PageProps) {
     }).format(amount)
   }
 
+  const getRiskVisuals = () => {
+    switch (alert.riskLevel) {
+      case 'critical':
+        return {
+          label: 'Crítico',
+          textClass: 'text-destructive',
+          ringColor: 'var(--destructive)',
+        }
+      case 'high':
+        return {
+          label: 'Riesgo Alto',
+          textClass: 'text-destructive',
+          ringColor: 'var(--destructive)',
+        }
+      case 'medium':
+        return {
+          label: 'Riesgo Medio',
+          textClass: 'text-on-tertiary-fixed-variant',
+          ringColor: 'var(--on-tertiary-fixed-variant)',
+        }
+      default:
+        return {
+          label: 'Riesgo Bajo',
+          textClass: 'text-secondary',
+          ringColor: 'var(--secondary)',
+        }
+    }
+  }
+
+  const riskVisuals = getRiskVisuals()
+
   return (
     <div className="min-h-screen bg-background">
       <Header showBackButton backHref="/" />
@@ -31,8 +62,8 @@ export default async function AlertDetailPage({ params }: PageProps) {
         {/* Hero Section */}
         <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-20">
           <div className="max-w-2xl">
-            <span className="text-xs font-semibold tracking-widest uppercase text-destructive mb-1 block">
-              Alerta de Riesgo Crítico
+            <span className={`text-xs font-semibold tracking-widest uppercase mb-1 block ${riskVisuals.textClass}`}>
+              Alerta de {riskVisuals.label}
             </span>
             <h1 className="text-3xl font-bold text-on-surface mb-2">
               {alert.entityName}
@@ -45,7 +76,7 @@ export default async function AlertDetailPage({ params }: PageProps) {
             <div
               className="relative w-24 h-24 rounded-full flex items-center justify-center p-1"
               style={{
-                background: `conic-gradient(#ba1a1a 0% ${alert.riskScore}%, #e1e3e4 ${alert.riskScore}% 100%)`,
+                background: `conic-gradient(${riskVisuals.ringColor} 0% ${alert.riskScore}%, var(--surface-container-highest) ${alert.riskScore}% 100%)`,
               }}
             >
               <div className="bg-surface w-full h-full rounded-full flex items-center justify-center">
@@ -59,8 +90,8 @@ export default async function AlertDetailPage({ params }: PageProps) {
               <span className="text-xs font-semibold block text-on-surface-variant">
                 Score de Riesgo
               </span>
-              <span className="text-xl font-semibold text-destructive">
-                Crítico
+              <span className={`text-xl font-semibold ${riskVisuals.textClass}`}>
+                {riskVisuals.label}
               </span>
             </div>
           </div>
@@ -96,7 +127,7 @@ export default async function AlertDetailPage({ params }: PageProps) {
                         ))}
                       </div>
                     </div>
-                    <span className="material-symbols-outlined filled text-destructive text-3xl">
+                    <span className={`material-symbols-outlined filled text-3xl ${riskVisuals.textClass}`}>
                       {signal.icon}
                     </span>
                   </div>
@@ -147,7 +178,7 @@ export default async function AlertDetailPage({ params }: PageProps) {
                   {alert.involvedSupplier.name}
                 </p>
                 <p className="text-sm text-on-surface-variant">
-                  NIT: {alert.involvedSupplier.nit}
+                  Identificador: {alert.involvedSupplier.nit}
                 </p>
               </div>
               <div className="mb-8">
@@ -159,17 +190,32 @@ export default async function AlertDetailPage({ params }: PageProps) {
                 </span>
               </div>
               <div className="flex flex-col gap-2">
-                <a
-                  href="https://www.guatecompras.gt"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full border border-outline-variant bg-surface-container-lowest text-on-surface text-xs font-semibold py-2 px-4 flex justify-between items-center hover:bg-surface-container-low transition-colors"
-                >
-                  Ver contratos en Guatecompras
-                  <span className="material-symbols-outlined text-lg">
-                    open_in_new
-                  </span>
-                </a>
+                {alert.guatecomprasUrl && (
+                  <a
+                    href={alert.guatecomprasUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full border border-outline-variant bg-surface-container-lowest text-on-surface text-xs font-semibold py-2 px-4 flex justify-between items-center hover:bg-surface-container-low transition-colors"
+                  >
+                    Ver contratos en Guatecompras
+                    <span className="material-symbols-outlined text-lg">
+                      open_in_new
+                    </span>
+                  </a>
+                )}
+                {alert.registroMercantilUrl && (
+                  <a
+                    href={alert.registroMercantilUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full border border-outline-variant bg-surface-container-lowest text-on-surface text-xs font-semibold py-2 px-4 flex justify-between items-center hover:bg-surface-container-low transition-colors"
+                  >
+                    Buscar en Registro Mercantil
+                    <span className="material-symbols-outlined text-lg">
+                      open_in_new
+                    </span>
+                  </a>
+                )}
                 <Link
                   href={`/proveedores/${alert.involvedSupplier.id}`}
                   className="w-full border border-outline-variant bg-surface-container-lowest text-on-surface text-xs font-semibold py-2 px-4 flex justify-between items-center hover:bg-surface-container-low transition-colors"

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { client } from '@/lib/sdk'
 import { Header, StatsBar, AIAssistantButton, RiskBadge } from '@/components/guatevigila'
-import { Building, FileText, AlertTriangle, ChevronRight, Search, Filter, Users } from 'lucide-react'
+import { Building, FileText, AlertTriangle, ChevronRight, Search, Filter } from 'lucide-react'
 
 function formatCurrency(amount: number, currency: string): string {
   if (amount >= 1000000000) {
@@ -27,7 +27,14 @@ export default async function ProveedoresPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <StatsBar stats={stats} />
+      <StatsBar
+        processesAnalyzed={stats.processesAnalyzed}
+        totalAmount={stats.totalAmount}
+        currency={stats.currency}
+        periodStart={stats.periodStart}
+        periodEnd={stats.periodEnd}
+        activeAlerts={stats.activeAlerts}
+      />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Page Header */}
@@ -83,7 +90,7 @@ export default async function ProveedoresPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Buscar proveedor por nombre o NIT..."
+              placeholder="Buscar proveedor por nombre o identificador..."
               className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -119,7 +126,7 @@ export default async function ProveedoresPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="font-medium text-foreground truncate">{supplier.name}</p>
-                      <p className="text-xs text-muted-foreground">NIT: {supplier.nit}</p>
+                      <p className="text-xs text-muted-foreground">Identificador: {supplier.nit}</p>
                     </div>
                   </div>
                 </div>
@@ -137,7 +144,7 @@ export default async function ProveedoresPage() {
                 </div>
                 <div className="col-span-1 md:col-span-2 text-sm md:text-center">
                   <span className="md:hidden text-muted-foreground">Oferta Única: </span>
-                  <span className={`font-medium ${supplier.singleBidderPercentage > 50 ? 'text-destructive' : supplier.singleBidderPercentage > 25 ? 'text-warning' : 'text-foreground'}`}>
+                  <span className={`font-medium ${supplier.singleBidderPercentage > 50 ? 'text-destructive' : supplier.singleBidderPercentage > 25 ? 'text-on-tertiary-fixed-variant' : 'text-foreground'}`}>
                     {supplier.singleBidderPercentage}%
                   </span>
                 </div>

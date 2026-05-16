@@ -35,7 +35,14 @@ export default async function EntidadesPage({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <StatsBar stats={stats} />
+      <StatsBar
+        processesAnalyzed={stats.processesAnalyzed}
+        totalAmount={stats.totalAmount}
+        currency={stats.currency}
+        periodStart={stats.periodStart}
+        periodEnd={stats.periodEnd}
+        activeAlerts={stats.activeAlerts}
+      />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">

@@ -1,22 +1,26 @@
 import type { GlobalStats } from '../types'
 import { query } from '@/lib/db'
+import { getActiveAlertCount } from './alerts'
 
 export async function getGlobalStats(): Promise<GlobalStats> {
-  const [row] = await query<{
-    processes: number
-    total_amount: number
-    period_start: number
-    period_end: number
-  }>(`
-    SELECT
-      COUNT(DISTINCT m.ocid)                        AS processes,
-      SUM(a.value_amount)                           AS total_amount,
-      MIN(year(m.tender_tenderPeriod_startDate))    AS period_start,
-      MAX(year(m.tender_tenderPeriod_startDate))    AS period_end
-    FROM main m
-    JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-    WHERE year(m.tender_tenderPeriod_startDate) > 2000
-  `)
+  const [[row], activeAlerts] = await Promise.all([
+    query<{
+      processes: number
+      total_amount: number
+      period_start: number
+      period_end: number
+    }>(`
+      SELECT
+        COUNT(DISTINCT m.ocid)                        AS processes,
+        SUM(a.value_amount)                           AS total_amount,
+        MIN(year(m.tender_tenderPeriod_startDate))    AS period_start,
+        MAX(year(m.tender_tenderPeriod_startDate))    AS period_end
+      FROM main m
+      JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
+      WHERE year(m.tender_tenderPeriod_startDate) > 2000
+    `),
+    getActiveAlertCount(),
+  ])
 
   return {
     processesAnalyzed: Number(row.processes),
@@ -24,6 +28,6 @@ export async function getGlobalStats(): Promise<GlobalStats> {
     currency: 'GTQ',
     periodStart: Number(row.period_start),
     periodEnd: Number(row.period_end),
-    activeAlerts: 0,
+    activeAlerts,
   }
 }

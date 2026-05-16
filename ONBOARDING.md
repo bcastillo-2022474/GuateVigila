@@ -106,12 +106,20 @@ El schema completo con todos los campos está en `/home/joao/Downloads/gt_2024/s
 El archivo `lib/sdk/types.ts` es la fuente de verdad. Estas son las interfaces que debes respetar:
 
 ```typescript
+type SignalType =
+  | 'single_bidder'
+  | 'short_deadline'
+  | 'direct_purchase'
+  | 'award_gap'
+  | 'failed_tenders'
+
 // Alerta en la lista principal
 interface Alert {
   id: string
   entityId: string
   entityName: string
   riskLevel: RiskLevel          // 'critical' | 'high' | 'medium' | 'low'
+  signalKey: SignalType         // identificador estable, ej: "single_bidder"
   signalType: string            // nombre humano de la señal, ej: "Proveedor único recurrente"
   signalIcon: string            // nombre de Material Symbol, ej: "person_off"
   year: string                  // "2024"
@@ -130,19 +138,21 @@ interface AlertDetail {
   riskLevel: RiskLevel
   signals: Signal[]
   involvedSupplier: {
-    id: string                  // NIT completo con prefijo GT-NIT-
+    id: string                  // identificador completo del proveedor: GT-NIT-... o GT-GCID-...
     name: string
-    nit: string                 // solo el número, sin prefijo
+    nit: string                 // identificador mostrado; para GT-NIT-* va sin prefijo
     totalAwarded: number
     year: number
   }
   draftInvestigation: string    // puede ser string vacío inicialmente
+  guatecomprasUrl?: string      // solo si la URL puede derivarse confiablemente
+  registroMercantilUrl?: string // disponible para IDs GT-NIT-*
   networkMapUrl?: string
 }
 
 interface Signal {
   id: string
-  type: string                  // identificador de señal: "single_bidder", "short_deadline", etc.
+  type: SignalType              // identificador de señal: "single_bidder", "short_deadline", etc.
   title: string                 // ej: "91% de contratos sin competencia"
   description: string           // ej: "Proveedor único recurrente"
   icon: string                  // Material Symbol
@@ -335,7 +345,15 @@ const SIGNAL_WEIGHTS = {
 // riskLevel: >= 60 → 'critical', >= 40 → 'high', >= 20 → 'medium', < 20 → 'low'
 ```
 
-Para `getAlertById(id: string)`, el `id` que llega ya tiene el formato `{buyer_id}::{supplier_id}::{signal_type}` — parsea las partes y re-corre las queries filtrando por ese par para construir el `AlertDetail` completo.
+La cola pública materializa **una sola alerta por par** `(buyer_id, supplier_id)`. Si un mismo par activa múltiples señales, se fusionan en una sola tarjeta y el `signal_type` del `id` corresponde a la señal principal por prioridad:
+
+```typescript
+['single_bidder', 'short_deadline', 'direct_purchase', 'award_gap', 'failed_tenders']
+```
+
+Las señales por entidad (`direct_purchase`, `award_gap`, `failed_tenders`) se adjuntan a todos los pares del mismo comprador que ya activaron `single_bidder` o `short_deadline`. Si la entidad no tiene ninguno, se siembra una sola alerta con el proveedor top por monto adjudicado.
+
+Para `getAlertById(id: string)`, el `id` que llega ya tiene el formato `{buyer_id}::{supplier_id}::{signal_type}` — parsea las partes, re-corre las queries del comprador y resuelve el par exacto para construir el `AlertDetail` completo.
 
 **Coordina con Persona 3** para que el `id` que generas aquí coincida con el que se usa en los links `href="/alertas/{id}"` del `AlertCard`.
 
@@ -345,9 +363,9 @@ Para `getAlertById(id: string)`, el `id` que llega ya tiene el formato `{buyer_i
 
 # Persona 2 — Perfil de proveedor completo
 
-**Tu tarea:** implementar `getSupplierById()` en `lib/sdk/queries/suppliers.ts`. Actualmente devuelve `null` para todos los ids, lo que hace que `/proveedores/[id]` muestre un 404.
+**Tu tarea:** reemplazar el resolver híbrido actual de `getSupplierById()` en `lib/sdk/queries/suppliers.ts` por el perfil completo de proveedor. Persona 1 ya dejó un perfil mínimo real para cualquier `supplier_id` enlazado desde alertas o entidades, así que `/proveedores/[id]` ya no debería caer en 404 para IDs válidos del dataset.
 
-El `id` que llega como parámetro de ruta es el NIT completo con prefijo: `GT-NIT-12345678` o `GT-NIT-12345678K`. Viene de `awards_suppliers.id`.
+El `id` que llega como parámetro de ruta es el identificador completo del proveedor tal como viene en `awards_suppliers.id`: normalmente `GT-NIT-12345678`, `GT-NIT-12345678K` o `GT-GCID-...`.
 
 ---
 
@@ -417,8 +435,8 @@ LIMIT 10
 return {
   id: String(summary.supplier_id),
   name: summary.supplier_name,
-  nit: String(summary.supplier_id).replace('GT-NIT-', ''),
-  industry: 'General',              // no hay campo en el dataset, usar 'General' por ahora
+  nit: getSupplierDisplayIdentifier(String(summary.supplier_id)),
+  industry: 'Pendiente de clasificación',
   totalContracts: Number(summary.total_awards),
   totalAwarded: Number(summary.total_amount),
   currency: 'GTQ',
@@ -432,14 +450,9 @@ return {
     amount: Number(r.amount),
     contractCount: Number(r.contract_count),
   })),
-  alerts: [],                       // dejar vacío por ahora, Persona 1 lo llenará
-  associates: cowinners.map(r => ({
-    id: String(r.associate_id),
-    name: r.associate_name,
-    role: 'Co-ganador frecuente',
-    participation: `${r.shared_tenders} licitaciones compartidas`,
-    otherCompanies: 0,
-  })),
+  alerts: await getSupplierAlertsBySupplierId(String(summary.supplier_id)),
+  associates: [],
+  registroMercantilUrl: buildRegistroMercantilUrl(String(summary.supplier_id)),
 }
 ```
 
@@ -447,7 +460,7 @@ return {
 
 ### Link a Registro Mercantil
 
-La UI en `app/proveedores/[id]/page.tsx` ya tiene un botón "Buscar en Registro Mercantil" con href estático. Actualízalo con la URL real:
+La UI en `app/proveedores/[id]/page.tsx` ya consume `supplier.registroMercantilUrl`. Mantén esa URL real solo para IDs `GT-NIT-*`:
 
 ```
 https://eregistros.registromercantil.gob.gt/index.jsp?nit={nit_sin_prefijo}
@@ -459,7 +472,7 @@ El `nit` sin prefijo es `id.replace('GT-NIT-', '').replace('K', '')`.
 
 ### Atención: la lista de proveedores (`getSuppliers`)
 
-`lib/sdk/queries/suppliers.ts` también tiene `getSuppliers()` que aún devuelve mock data. Implementa también la versión real siguiendo el mismo patrón que `getEntities()` en `entities.ts` — los campos requeridos para `SupplierListItem` son:
+`lib/sdk/queries/suppliers.ts` también tiene `getSuppliers()` que aún devuelve mock data. Ese método sigue siendo transicional. Cuando Persona 2 lo reemplace por la versión real, debe mantener compatibilidad con el detalle híbrido ya resuelto por `supplier_id` — los campos requeridos para `SupplierListItem` son:
 
 ```typescript
 interface SupplierListItem {
@@ -498,7 +511,7 @@ Los query params a soportar:
 
 | Param | Ejemplo | Comportamiento |
 |---|---|---|
-| `?signal=` | `?signal=single_bidder` | Filtra por `alert.signalType` (usa el campo `type` de `Signal`) |
+| `?signal=` | `?signal=single_bidder` | Filtra por `alert.signalKey` |
 | `?entity=` | `?entity=IGSS` | Fuzzy match contra `alert.entityName` con Fuse.js |
 | `?year=` | `?year=2024` | Filtra exacto contra `alert.year` |
 | `?page=` | `?page=2` | Paginación, 20 alertas por página |
@@ -565,7 +578,7 @@ No acuses ni afirmes que hubo corrupción. Presenta los hechos y el patrón esta
 No uses frases como "según los datos" o "de acuerdo a". Empieza directamente con el hallazgo.
 
 Entidad compradora: ${alert.entityName}
-Proveedor involucrado: ${alert.involvedSupplier.name} (NIT: ${alert.involvedSupplier.nit})
+Proveedor involucrado: ${alert.involvedSupplier.name} (Identificador: ${alert.involvedSupplier.nit})
 Monto total adjudicado: Q${alert.involvedSupplier.totalAwarded.toLocaleString('es-GT')} en ${alert.involvedSupplier.year}
 Señales detectadas:
 ${signalSummary}`,
