@@ -26,7 +26,7 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
 
   return (
     <header className="bg-surface border-b border-outline-variant sticky top-0 z-40 h-16 w-full">
-      <div className="flex items-center justify-between px-4 md:px-16 w-full max-w-[1200px] mx-auto h-full">
+      <div className="flex items-center gap-5 justify-between px-4 md:px-16 w-full max-w-[1200px] mx-auto h-full">
         <div className="flex items-center gap-4 md:gap-8 flex-1">
           {showBackButton && (
             <Link
