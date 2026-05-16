@@ -16,7 +16,7 @@ import {
   BackgroundVariant,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import type { Entity } from '@/lib/sdk/types'
+import type { Entity, SupplierContract } from '@/lib/sdk/types'
 
 const RISK_COLORS: Record<string, string> = {
   critical: '#ba1a1a',
@@ -39,7 +39,7 @@ const RISK_LABEL: Record<string, string> = {
   low: 'BAJO',
 }
 
-function buildGraph(entity: Entity): { nodes: Node[]; edges: Edge[] } {
+function buildGraph(entity: Entity, suppliers: SupplierContract[]): { nodes: Node[]; edges: Edge[] } {
   const formatAmount = (n: number, currency: string) => {
     if (n >= 1_000_000_000) return `${currency} ${(n / 1_000_000_000).toFixed(1)}B`
     if (n >= 1_000_000) return `${currency} ${(n / 1_000_000).toFixed(1)}M`
@@ -66,12 +66,12 @@ function buildGraph(entity: Entity): { nodes: Node[]; edges: Edge[] } {
     },
   }
 
-  const count = entity.topSuppliers.length
+  const count = suppliers.length
   const verticalSpacing = 110
   const totalHeight = (count - 1) * verticalSpacing
   const startY = -totalHeight / 2
 
-  const supplierNodes: Node[] = entity.topSuppliers.map((s, i) => {
+  const supplierNodes: Node[] = suppliers.map((s, i) => {
     const color = RISK_COLORS[s.riskLevel] ?? '#444'
     const bg = RISK_BG[s.riskLevel] ?? '#f5f5f5'
     const label = RISK_LABEL[s.riskLevel] ?? s.riskLevel
@@ -119,7 +119,7 @@ function buildGraph(entity: Entity): { nodes: Node[]; edges: Edge[] } {
     }
   })
 
-  const edges: Edge[] = entity.topSuppliers.map((s) => ({
+  const edges: Edge[] = suppliers.map((s) => ({
     id: `e-entity-${s.supplierId}`,
     source: 'entity',
     target: `supplier-${s.supplierId}`,
@@ -135,10 +135,11 @@ function buildGraph(entity: Entity): { nodes: Node[]; edges: Edge[] } {
 
 interface EntityGraphProps {
   entity: Entity
+  suppliers: SupplierContract[]
 }
 
-export function EntityGraph({ entity }: EntityGraphProps) {
-  const { nodes: initialNodes, edges: initialEdges } = buildGraph(entity)
+export function EntityGraph({ entity, suppliers }: EntityGraphProps) {
+  const { nodes: initialNodes, edges: initialEdges } = buildGraph(entity, suppliers)
   const [nodes, , onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
@@ -166,7 +167,7 @@ export function EntityGraph({ entity }: EntityGraphProps) {
         <MiniMap
           nodeColor={(n) => {
             if (n.id === 'entity') return '#1a1c1e'
-            const supplier = entity.topSuppliers.find(
+            const supplier = suppliers.find(
               (s) => `supplier-${s.supplierId}` === n.id,
             )
             return RISK_COLORS[supplier?.riskLevel ?? 'low'] ?? '#888'

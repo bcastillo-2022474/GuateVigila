@@ -1,26 +1,9 @@
-// ===========================================
-// GuateVigila SDK - Mock Data
-// ===========================================
-
 import type {
   Alert,
   AlertDetail,
-  Entity,
   Supplier,
-  GlobalStats,
-  EntityListItem,
   SupplierListItem,
 } from './types'
-
-// Global Stats
-export const mockGlobalStats: GlobalStats = {
-  processesAnalyzed: 276599,
-  totalAmount: 31700000000,
-  currency: 'GTQ',
-  periodStart: 2020,
-  periodEnd: 2024,
-  activeAlerts: 847,
-}
 
 // Alerts
 export const mockAlerts: Alert[] = [
@@ -136,65 +119,6 @@ export const mockAlertDetails: Record<string, AlertDetail> = {
   },
 }
 
-// Entities
-export const mockEntities: Record<string, Entity> = {
-  'entity-001': {
-    id: 'entity-001',
-    name: 'Ministerio de Comunicaciones, Infraestructura y Vivienda',
-    shortName: 'MICIVI',
-    totalContracts: 1482,
-    totalAmount: 4200000000,
-    currency: 'GTQ',
-    directPurchasePercentage: 62.4,
-    activeAlerts: 14,
-    yearlyData: [
-      { year: 2020, amount: 420000000, label: 'Q420M' },
-      { year: 2021, amount: 890000000, label: 'Q890M' },
-      { year: 2022, amount: 1200000000, label: 'Q1.2B' },
-      { year: 2023, amount: 1800000000, label: 'Q1.8B' },
-      { year: 2024, amount: 4200000000, label: 'Q4.2B' },
-    ],
-    topSuppliers: [
-      {
-        id: 'contract-001',
-        supplierId: 'supplier-003',
-        supplierName: 'Constructora de Occidente S.A.',
-        contractCount: 24,
-        totalAmount: 142500000,
-        currency: 'GTQ',
-        riskLevel: 'high',
-      },
-      {
-        id: 'contract-002',
-        supplierId: 'supplier-004',
-        supplierName: 'Ingeniería Global de Guatemala',
-        contractCount: 18,
-        totalAmount: 98210000,
-        currency: 'GTQ',
-        riskLevel: 'low',
-      },
-      {
-        id: 'contract-003',
-        supplierId: 'supplier-005',
-        supplierName: 'Suministros Técnicos S.A.',
-        contractCount: 42,
-        totalAmount: 45000000,
-        currency: 'GTQ',
-        riskLevel: 'medium',
-      },
-      {
-        id: 'contract-004',
-        supplierId: 'supplier-006',
-        supplierName: 'Distribuidora El Faro',
-        contractCount: 11,
-        totalAmount: 32150000,
-        currency: 'GTQ',
-        riskLevel: 'low',
-      },
-    ],
-  },
-}
-
 // Suppliers
 export const mockSuppliers: Record<string, Supplier> = {
   'supplier-001': {
@@ -219,24 +143,21 @@ export const mockSuppliers: Record<string, Supplier> = {
         id: 'supplier-alert-001',
         severity: 'critical',
         title: 'Concentración en una Entidad',
-        description:
-          'El 85% de los contratos del 2024 provienen de la Municipalidad de San José Pinula.',
+        description: 'El 85% de los contratos del 2024 provienen de la Municipalidad de San José Pinula.',
         date: 'Jun 12, 2024',
       },
       {
         id: 'supplier-alert-002',
         severity: 'medium',
         title: 'Fraccionamiento detectado',
-        description:
-          'Múltiples adjudicaciones por debajo del umbral de licitación en un mismo mes.',
+        description: 'Múltiples adjudicaciones por debajo del umbral de licitación en un mismo mes.',
         date: 'Mayo 28, 2024',
       },
       {
         id: 'supplier-alert-003',
         severity: 'medium',
         title: 'Oferta Única Recurrente',
-        description:
-          'Ha ganado los últimos 5 concursos sin competidores registrados en el portal.',
+        description: 'Ha ganado los últimos 5 concursos sin competidores registrados en el portal.',
         date: 'Abr 15, 2024',
       },
     ],
@@ -258,98 +179,6 @@ export const mockSuppliers: Record<string, Supplier> = {
     ],
   },
 }
-
-// Entity List Items (for explorer)
-export const mockEntityList: EntityListItem[] = [
-  {
-    id: 'entity-001',
-    name: 'Ministerio de Comunicaciones, Infraestructura y Vivienda',
-    shortName: 'MICIVI',
-    type: 'ministerio',
-    totalContracts: 1482,
-    totalAmount: 4200000000,
-    currency: 'GTQ',
-    activeAlerts: 14,
-    riskLevel: 'high',
-  },
-  {
-    id: 'entity-002',
-    name: 'Municipalidad de Guatemala',
-    shortName: 'MUNIGUATE',
-    type: 'municipalidad',
-    totalContracts: 2341,
-    totalAmount: 1850000000,
-    currency: 'GTQ',
-    activeAlerts: 8,
-    riskLevel: 'medium',
-  },
-  {
-    id: 'entity-003',
-    name: 'Ministerio de Salud Pública y Asistencia Social',
-    shortName: 'MSPAS',
-    type: 'ministerio',
-    totalContracts: 3420,
-    totalAmount: 5200000000,
-    currency: 'GTQ',
-    activeAlerts: 22,
-    riskLevel: 'high',
-  },
-  {
-    id: 'entity-004',
-    name: 'Instituto Guatemalteco de Seguridad Social',
-    shortName: 'IGSS',
-    type: 'instituto',
-    totalContracts: 4521,
-    totalAmount: 8900000000,
-    currency: 'GTQ',
-    activeAlerts: 31,
-    riskLevel: 'critical',
-  },
-  {
-    id: 'entity-005',
-    name: 'Ministerio de Educación',
-    shortName: 'MINEDUC',
-    type: 'ministerio',
-    totalContracts: 1890,
-    totalAmount: 2100000000,
-    currency: 'GTQ',
-    activeAlerts: 5,
-    riskLevel: 'low',
-  },
-  {
-    id: 'entity-006',
-    name: 'Municipalidad de Mixco',
-    shortName: 'MUNIMIXCO',
-    type: 'municipalidad',
-    totalContracts: 542,
-    totalAmount: 320000000,
-    currency: 'GTQ',
-    activeAlerts: 12,
-    riskLevel: 'high',
-  },
-  {
-    id: 'entity-007',
-    name: 'Secretaría General de Planificación',
-    shortName: 'SEGEPLAN',
-    type: 'secretaria',
-    totalContracts: 234,
-    totalAmount: 89000000,
-    currency: 'GTQ',
-    activeAlerts: 2,
-    riskLevel: 'low',
-  },
-  {
-    id: 'entity-008',
-    name: 'Municipalidad de Villa Nueva',
-    shortName: 'MUNIVN',
-    type: 'municipalidad',
-    totalContracts: 678,
-    totalAmount: 450000000,
-    currency: 'GTQ',
-    activeAlerts: 9,
-    riskLevel: 'medium',
-  },
-]
 
 // Supplier List Items (for explorer)
 export const mockSupplierList: SupplierListItem[] = [
@@ -424,29 +253,5 @@ export const mockSupplierList: SupplierListItem[] = [
     clientEntities: 8,
     riskLevel: 'low',
     singleBidderPercentage: 15,
-  },
-  {
-    id: 'supplier-007',
-    name: 'Farmacéutica Central, S.A.',
-    nit: '2345678-9',
-    industry: 'Salud',
-    totalContracts: 456,
-    totalAwarded: 520000000,
-    currency: 'GTQ',
-    clientEntities: 14,
-    riskLevel: 'medium',
-    singleBidderPercentage: 35,
-  },
-  {
-    id: 'supplier-008',
-    name: 'Transportes Unidos del Sur',
-    nit: '3456789-0',
-    industry: 'Transporte',
-    totalContracts: 67,
-    totalAwarded: 18900000,
-    currency: 'GTQ',
-    clientEntities: 6,
-    riskLevel: 'low',
-    singleBidderPercentage: 8,
   },
 ]

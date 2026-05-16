@@ -1,15 +1,22 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { client, type RiskLevel } from '@/lib/sdk'
-import { Header, AIAssistantButton, MetricCard } from '@/components/guatevigila'
+import { Header, AIAssistantButton, MetricCard, SupplierContracts } from '@/components/guatevigila'
 
 interface PageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ q?: string; page?: string }>
 }
 
-export default async function SupplierProfilePage({ params }: PageProps) {
+export default async function SupplierProfilePage({ params, searchParams }: PageProps) {
   const { id } = await params
-  const supplier = await client.getSupplierById(id)
+  const { q = '', page: pageParam } = await searchParams
+  const pageNum = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
+
+  const [supplier, contractsResult] = await Promise.all([
+    client.getSupplierById(id),
+    client.getSupplierContracts(id, { q, page: pageNum }),
+  ])
 
   if (!supplier) {
     notFound()
@@ -225,6 +232,9 @@ export default async function SupplierProfilePage({ params }: PageProps) {
             ))}
           </div>
         </div>
+
+        {/* Contracts by Entity */}
+        <SupplierContracts result={contractsResult} initialQ={q} />
 
         {/* Associates Table */}
         <div className="mt-20">

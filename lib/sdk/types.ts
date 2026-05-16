@@ -75,7 +75,19 @@ export interface Entity {
     amount: number
     label: string
   }[]
-  topSuppliers: SupplierContract[]
+}
+
+export interface EntitySuppliersFilters {
+  q?: string
+  page?: number
+}
+
+export interface PaginatedSuppliers {
+  suppliers: SupplierContract[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 export interface SupplierContract {
@@ -108,6 +120,29 @@ export interface Supplier {
   alerts: SupplierAlert[]
   associates: Associate[]
   registroMercantilUrl?: string
+}
+
+export interface SupplierContractsFilters {
+  q?: string
+  page?: number
+}
+
+export interface SupplierContract2 {
+  id: string
+  entityId: string
+  entityName: string
+  contractCount: number
+  totalAmount: number
+  currency: string
+  riskLevel: RiskLevel
+}
+
+export interface PaginatedSupplierContracts {
+  contracts: SupplierContract2[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 export interface SupplierAlert {
@@ -177,10 +212,12 @@ export interface GuateVigilaSDK {
   // Entities
   getEntities(filters?: EntityFilters): Promise<EntityListItem[]>
   getEntityById(id: string): Promise<Entity | null>
+  getEntitySuppliers(id: string, filters?: EntitySuppliersFilters): Promise<PaginatedSuppliers>
   
   // Suppliers
   getSuppliers(): Promise<SupplierListItem[]>
   getSupplierById(id: string): Promise<Supplier | null>
+  getSupplierContracts(id: string, filters?: SupplierContractsFilters): Promise<PaginatedSupplierContracts>
   
   // Stats
   getGlobalStats(): Promise<GlobalStats>
