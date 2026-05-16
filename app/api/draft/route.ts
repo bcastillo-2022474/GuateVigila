@@ -58,12 +58,12 @@ ${signalSummary}`,
                     },
                 ],
                 temperature: 0.7,
-                max_tokens: 300,
+                max_tokens: 1024,
             })
 
-        const draft =
-            completion.choices[0]?.message
-                ?.content ?? ''
+        const raw = completion.choices[0]?.message?.content ?? ''
+        const thinkEnd = raw.indexOf('</think>')
+        const draft = thinkEnd !== -1 ? raw.slice(thinkEnd + 8).trim() : raw.trim()
 
         return Response.json({
             draft,

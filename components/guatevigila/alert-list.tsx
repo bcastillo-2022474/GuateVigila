@@ -1,139 +1,51 @@
 'use client'
-import {
-  useMemo,
-  useState,
-  useTransition,
-  useCallback,
-} from 'react'
-import Fuse from 'fuse.js'
+
+import { useState, useTransition, useCallback } from 'react'
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
-import {
-  useRouter,
-  usePathname,
-  useSearchParams,
-} from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useDebouncedCallback } from 'use-debounce'
-import type { Alert } from '@/lib/sdk/types'
+import type { PaginatedAlerts } from '@/lib/sdk/types'
 import { AlertCard, SIGNAL_LABELS } from '@/components/guatevigila/alert-card'
 
-const ITEMS_PER_PAGE = 20
-
 interface AlertListProps {
-  alerts: Alert[]
+  result: PaginatedAlerts
+  signal: string
+  year: string
+  entity: string
 }
 
-export function AlertList({
-  alerts,
-}: AlertListProps) {
+export function AlertList({ result, signal, year, entity }: AlertListProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-
   const [, startTransition] = useTransition()
+  const [inputEntity, setInputEntity] = useState(entity)
 
-  const signal = searchParams.get('signal') ?? ''
-  const entity = searchParams.get('entity') ?? ''
-  const year = searchParams.get('year') ?? ''
-  const page = Number(searchParams.get('page') ?? '1')
-
-  const [inputEntity, setInputEntity] =
-    useState(entity)
+  const { alerts, total, page, pageSize, totalPages } = result
 
   const pushParams = useCallback(
     (overrides: Record<string, string | null>) => {
-      const params = new URLSearchParams(
-        searchParams.toString()
-      )
-
-      for (const [k, v] of Object.entries(
-        overrides
-      )) {
-        if (v === null || v === '') {
-          params.delete(k)
-        } else {
-          params.set(k, v)
-        }
+      const params = new URLSearchParams(searchParams.toString())
+      for (const [k, v] of Object.entries(overrides)) {
+        if (v === null || v === '') params.delete(k)
+        else params.set(k, v)
       }
-
       const qs = params.toString()
-
       startTransition(() => {
-        router.replace(
-          qs ? `${pathname}?${qs}` : pathname,
-          { scroll: false }
-        )
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
       })
     },
     [router, pathname, searchParams]
   )
 
-  const debouncedSearch =
-    useDebouncedCallback((value: string) => {
-      pushParams({
-        entity: value || null,
-        page: null,
-      })
-    }, 300)
-
-  const fuse = useMemo(() => {
-    return new Fuse(alerts, {
-      keys: ['entityName'],
-      threshold: 0.35,
-    })
-  }, [alerts])
-
-  const filteredAlerts = useMemo(() => {
-    let results = alerts
-
-    if (signal) {
-      results = results.filter(
-        (alert) =>
-          alert.signalType === signal
-      )
-    }
-
-    if (year) {
-      results = results.filter(
-        (alert) => alert.year === year
-      )
-    }
-
-    if (entity) {
-      results = fuse
-        .search(entity)
-        .map((r) => r.item)
-    }
-
-    return results
-  }, [
-    alerts,
-    signal,
-    year,
-    entity,
-    fuse,
-  ])
-
-  const totalPages = Math.ceil(
-    filteredAlerts.length / ITEMS_PER_PAGE
-  )
-
-  const paginatedAlerts =
-    filteredAlerts.slice(
-      (page - 1) * ITEMS_PER_PAGE,
-      page * ITEMS_PER_PAGE
-    )
-
-  function goToPage(p: number) {
-    pushParams({
-      page: p === 1 ? null : String(p),
-    })
-  }
+  const debouncedSearch = useDebouncedCallback((value: string) => {
+    pushParams({ entity: value || null, page: null })
+  }, 300)
 
   return (
     <div className="space-y-6">
       {/* Filters */}
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
           <input
@@ -148,7 +60,6 @@ export function AlertList({
           />
         </div>
 
-        {/* Signal */}
         <select
           value={signal}
           onChange={(e) => pushParams({ signal: e.target.value || null, page: null })}
@@ -160,7 +71,6 @@ export function AlertList({
           ))}
         </select>
 
-        {/* Year */}
         <input
           type="text"
           value={year}
@@ -170,27 +80,30 @@ export function AlertList({
         />
       </div>
 
-      {/* Results */}
+      {/* Results count */}
+      {total > 0 && (
+        <p className="text-xs text-on-surface-variant">
+          {total} alerta{total !== 1 ? 's' : ''} encontrada{total !== 1 ? 's' : ''}
+          {total > pageSize ? ` — página ${page} de ${totalPages}` : ''}
+        </p>
+      )}
+
+      {/* List */}
       <div className="space-y-4">
-        {paginatedAlerts.length === 0 ? (
+        {alerts.length === 0 ? (
           <div className="bg-surface-container-lowest border border-outline-variant p-10 text-center text-sm text-on-surface-variant">
             No se encontraron alertas.
           </div>
         ) : (
-          paginatedAlerts.map((alert) => (
-            <AlertCard
-              key={alert.id}
-              alert={alert}
-            />
-          ))
+          alerts.map((alert) => <AlertCard key={alert.id} alert={alert} />)
         )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-4">
           <button
-            onClick={() => goToPage(page - 1)}
+            onClick={() => pushParams({ page: page > 2 ? String(page - 1) : null })}
             disabled={page <= 1}
             className="flex items-center gap-2 px-4 py-2 border border-outline-variant bg-surface-container-lowest text-sm text-on-surface disabled:opacity-40 hover:bg-surface-container-low transition-colors"
           >
@@ -198,12 +111,12 @@ export function AlertList({
             Anterior
           </button>
 
-          <div className="text-sm text-on-surface-variant">
+          <span className="text-sm text-on-surface-variant">
             Página {page} de {totalPages}
-          </div>
+          </span>
 
           <button
-            onClick={() => goToPage(page + 1)}
+            onClick={() => pushParams({ page: String(page + 1) })}
             disabled={page >= totalPages}
             className="flex items-center gap-2 px-4 py-2 border border-outline-variant bg-surface-container-lowest text-sm text-on-surface disabled:opacity-40 hover:bg-surface-container-low transition-colors"
           >

@@ -9,6 +9,10 @@ import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { StatsBar } from '@/components/guatevigila/stats-bar'
 import { AlertList } from '@/components/guatevigila/alert-list'
 
+interface PageProps {
+  searchParams: Promise<{ signal?: string; year?: string; entity?: string; page?: string }>
+}
+
 export const metadata: Metadata = {
   title: META.pages.alertas.title,
   description: META.pages.alertas.description,
@@ -36,10 +40,16 @@ async function StatsBarLoader() {
   return <StatsBar stats={stats} />
 }
 
-async function AlertListLoader() {
-  const alerts = await client.getAlerts()
-
-  return <AlertList alerts={alerts} />
+async function AlertListLoader({
+  signal, year, entity, page,
+}: { signal: string; year: string; entity: string; page: number }) {
+  const result = await client.getAlerts({
+    signal: signal || undefined,
+    year: year || undefined,
+    entity: entity || undefined,
+    page,
+  })
+  return <AlertList result={result} signal={signal} year={year} entity={entity} />
 }
 
 function StatsBarSkeleton() {
@@ -65,7 +75,9 @@ function AlertListSkeleton() {
   )
 }
 
-export default function AlertQueuePage() {
+export default async function AlertQueuePage({ searchParams }: PageProps) {
+  const { signal = '', year = '', entity = '', page: pageParam = '1' } = await searchParams
+  const page = Math.max(1, parseInt(pageParam, 10) || 1)
   return (
     <div className="min-h-screen bg-background">
       <script
@@ -83,7 +95,7 @@ export default function AlertQueuePage() {
 
       <main className="max-w-[1200px] mx-auto px-4 md:px-16 py-12">
         <Suspense fallback={<AlertListSkeleton />}>
-          <AlertListLoader />
+          <AlertListLoader signal={signal} year={year} entity={entity} page={page} />
         </Suspense>
 
         <div className="h-20" />
