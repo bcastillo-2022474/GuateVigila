@@ -1,7 +1,7 @@
-import type { PaginatedSupplierContracts, PaginatedSupplierList, RiskLevel, Supplier, SupplierContractsFilters, SupplierFilters, SupplierListItem } from '../types'
+import type { Associate, PaginatedAssociates, PaginatedSupplierContracts, PaginatedSupplierList, RiskLevel, Supplier, SupplierContractsFilters, SupplierFilters, SupplierListItem } from '../types'
 import { query } from '@/lib/db/index'
 
-const PAGE_SIZE_LIST = 50
+const PAGE_SIZE_LIST = 20
 const PAGE_SIZE = 15
 
 function riskLevel(singleBidderPct: number, totalAmount: number): RiskLevel {
@@ -88,7 +88,7 @@ export async function getSuppliers(filters: SupplierFilters = {}): Promise<Pagin
 export async function getSupplierById(id: string): Promise<Supplier | null> {
   const safeId = id.replace(/'/g, "''")
 
-  const [summaryRows, yearlyRows, cowinnerRows] = await Promise.all([
+  const [summaryRows, yearlyRows] = await Promise.all([
     query<{
       ocds_id: string
       supplier_name: string
@@ -126,23 +126,6 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
       GROUP BY 1
       ORDER BY 1
     `),
-
-    query<{ competitor_id: string; competitor_name: string; shared_tenders: number }>(`
-      SELECT
-        MAX(s2.id)                          AS competitor_id,
-        s2.name                             AS competitor_name,
-        COUNT(DISTINCT m.ocid)              AS shared_tenders
-      FROM awards_suppliers s1
-      JOIN awards a1 ON a1.id = s1.awards_id AND a1.status = 'active'
-      JOIN main m    ON m.ocid = a1.main_ocid
-      JOIN awards a2 ON a2.main_ocid = m.ocid AND a2.status = 'active'
-      JOIN awards_suppliers s2 ON s2.awards_id = a2.id AND s2.id != '${safeId}'
-      WHERE s1.id = '${safeId}'
-        AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
-      GROUP BY s2.name
-      ORDER BY shared_tenders DESC
-      LIMIT 10
-    `),
   ])
 
   const summary = summaryRows[0]
@@ -174,13 +157,6 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
     period: `${periodStart}–${periodEnd}`,
     yearlyData: years,
     alerts: [],
-    associates: cowinnerRows.map((r) => ({
-      id: String(r.competitor_id),
-      name: String(r.competitor_name),
-      role: 'Competidor frecuente',
-      participation: `${r.shared_tenders} licitaciones en común`,
-      otherCompanies: 0,
-    })),
   }
 }
 
@@ -247,4 +223,51 @@ export async function getSupplierContracts(
   })
 
   return { contracts, total, page, pageSize: PAGE_SIZE, totalPages: Math.ceil(total / PAGE_SIZE) }
+}
+
+const PAGE_SIZE_ASSOCIATES = 20
+
+export async function getSupplierAssociates(id: string, page = 1): Promise<PaginatedAssociates> {
+  const safeId = id.replace(/'/g, "''")
+  const safePage = Math.max(1, page)
+  const offset = (safePage - 1) * PAGE_SIZE_ASSOCIATES
+
+  const [totalRows, rows] = await Promise.all([
+    query<{ total: number }>(`
+      SELECT COUNT(DISTINCT s2.name) AS total
+      FROM awards_suppliers s1
+      JOIN awards a1 ON a1.id = s1.awards_id AND a1.status = 'active'
+      JOIN main m    ON m.ocid = a1.main_ocid
+      JOIN awards a2 ON a2.main_ocid = m.ocid AND a2.status = 'active'
+      JOIN awards_suppliers s2 ON s2.awards_id = a2.id AND s2.id != '${safeId}'
+      WHERE s1.id = '${safeId}'
+        AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
+    `),
+
+    query<{ competitor_id: string; competitor_name: string; shared_tenders: number }>(`
+      SELECT
+        MAX(s2.id)             AS competitor_id,
+        s2.name                AS competitor_name,
+        COUNT(DISTINCT m.ocid) AS shared_tenders
+      FROM awards_suppliers s1
+      JOIN awards a1 ON a1.id = s1.awards_id AND a1.status = 'active'
+      JOIN main m    ON m.ocid = a1.main_ocid
+      JOIN awards a2 ON a2.main_ocid = m.ocid AND a2.status = 'active'
+      JOIN awards_suppliers s2 ON s2.awards_id = a2.id AND s2.id != '${safeId}'
+      WHERE s1.id = '${safeId}'
+        AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
+      GROUP BY s2.name
+      ORDER BY shared_tenders DESC
+      LIMIT ${PAGE_SIZE_ASSOCIATES} OFFSET ${offset}
+    `),
+  ])
+
+  const total = Number(totalRows[0]?.total ?? 0)
+  const associates: Associate[] = rows.map((r) => ({
+    id: String(r.competitor_id),
+    name: String(r.competitor_name),
+    sharedTenders: Number(r.shared_tenders),
+  }))
+
+  return { associates, total, page: safePage, pageSize: PAGE_SIZE_ASSOCIATES, totalPages: Math.ceil(total / PAGE_SIZE_ASSOCIATES) }
 }

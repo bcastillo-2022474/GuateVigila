@@ -105,7 +105,6 @@ export interface Supplier {
     contractCount: number
   }[]
   alerts: SupplierAlert[]
-  associates: Associate[]
 }
 
 export interface SupplierContractsFilters {
@@ -142,9 +141,15 @@ export interface SupplierAlert {
 export interface Associate {
   id: string
   name: string
-  role: string
-  participation: string
-  otherCompanies: number
+  sharedTenders: number
+}
+
+export interface PaginatedAssociates {
+  associates: Associate[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 export interface GlobalStats {
@@ -242,6 +247,7 @@ export interface GuateVigilaSDK {
   getSuppliers(filters?: SupplierFilters): Promise<PaginatedSupplierList>
   getSupplierById(id: string): Promise<Supplier | null>
   getSupplierContracts(id: string, filters?: SupplierContractsFilters): Promise<PaginatedSupplierContracts>
+  getSupplierAssociates(id: string, page?: number): Promise<PaginatedAssociates>
   
   // Stats
   getGlobalStats(): Promise<GlobalStats>

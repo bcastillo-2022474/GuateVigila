@@ -3,15 +3,16 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { client } from '@/lib/sdk/client'
-import type { RiskLevel } from '@/lib/sdk/types'
+import type { PaginatedAssociates, RiskLevel } from '@/lib/sdk/types'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { MetricCard } from '@/components/guatevigila/metric-card'
 import { SupplierContracts } from '@/components/guatevigila/supplier-contracts'
+import { SupplierAssociates } from '@/components/guatevigila/supplier-associates'
 
 interface PageProps {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ q?: string; page?: string }>
+  searchParams: Promise<{ q?: string; page?: string; apage?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -48,10 +49,11 @@ function alertLabel(severity: RiskLevel) {
   return 'Bajo'
 }
 
-async function SupplierContent({ id, q, pageNum }: { id: string; q: string; pageNum: number }) {
-  const [supplier, contractsResult] = await Promise.all([
+async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: string; pageNum: number; aPageNum: number }) {
+  const [supplier, contractsResult, associatesResult] = await Promise.all([
     client.getSupplierById(id),
     client.getSupplierContracts(id, { q, page: pageNum }),
+    client.getSupplierAssociates(id, aPageNum),
   ])
 
   if (!supplier) notFound()
@@ -154,35 +156,7 @@ async function SupplierContent({ id, q, pageNum }: { id: string; q: string; page
 
       <SupplierContracts result={contractsResult} initialQ={q} />
 
-      <div className="mt-20">
-        <h2 className="text-xl font-semibold mb-6">Socios y Representantes</h2>
-        <div className="bg-surface-container-lowest border border-outline-variant overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-surface-container-low border-b border-outline-variant">
-              <tr>
-                <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Nombre</th>
-                <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Rol</th>
-                <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Participación</th>
-                <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Otras Empresas</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {supplier.associates.map((associate) => (
-                <tr key={associate.id} className="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
-                  <td className="p-4 font-medium">{associate.name}</td>
-                  <td className="p-4 text-on-surface-variant">{associate.role}</td>
-                  <td className="p-4">{associate.participation}</td>
-                  <td className="p-4">
-                    <span className="px-2 py-0.5 bg-surface-container-high rounded-full text-sm">
-                      {associate.otherCompanies} empresa{associate.otherCompanies !== 1 ? 's' : ''}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <SupplierAssociates result={associatesResult} />
     </>
   )
 }
@@ -203,8 +177,9 @@ function ContentSkeleton() {
 
 export default async function SupplierProfilePage({ params, searchParams }: PageProps) {
   const { id } = await params
-  const { q = '', page: pageParam } = await searchParams
+  const { q = '', page: pageParam, apage: aPageParam } = await searchParams
   const pageNum = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
+  const aPageNum = Math.max(1, parseInt(aPageParam ?? '1', 10) || 1)
 
   return (
     <div className="min-h-screen bg-background">
@@ -212,7 +187,7 @@ export default async function SupplierProfilePage({ params, searchParams }: Page
 
       <main className="max-w-[1200px] mx-auto px-4 md:px-16 py-12">
         <Suspense fallback={<ContentSkeleton />}>
-          <SupplierContent id={id} q={q} pageNum={pageNum} />
+          <SupplierContent id={id} q={q} pageNum={pageNum} aPageNum={aPageNum} />
         </Suspense>
       </main>
 

@@ -156,22 +156,6 @@ export const mockSuppliers: Record<string, Supplier> = {
         date: 'Abr 15, 2024',
       },
     ],
-    associates: [
-      {
-        id: 'associate-001',
-        name: 'Marco Antonio Rivera',
-        role: 'Representante Legal',
-        participation: '40%',
-        otherCompanies: 3,
-      },
-      {
-        id: 'associate-002',
-        name: 'Lucía Fernanda López',
-        role: 'Socio Fundador',
-        participation: '60%',
-        otherCompanies: 1,
-      },
-    ],
   },
 }
 
