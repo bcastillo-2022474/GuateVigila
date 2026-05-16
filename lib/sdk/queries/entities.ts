@@ -2,8 +2,10 @@ import { query } from '@/lib/db'
 import type {
   Entity,
   EntityFilters,
+  EntityListFilters,
   EntityListItem,
   EntitySuppliersFilters,
+  PaginatedEntities,
   PaginatedSuppliers,
   RiskLevel,
 } from '../types'
@@ -11,6 +13,8 @@ import { getEntityActiveAlertCounts } from './alerts'
 
 const VALID_TENDER_YEAR_FILTER =
   'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000'
+const ENTITY_LIST_PAGE_SIZE = 20
+const ENTITY_SUPPLIERS_PAGE_SIZE = 15
 
 function inferType(name: string): EntityListItem['type'] {
   const n = name.toUpperCase()
@@ -49,6 +53,17 @@ function riskLevel(singleBidderPct: number, totalAmount: number): RiskLevel {
   if (singleBidderPct > 0.7 || totalAmount > 1_000_000_000) return 'high'
   if (singleBidderPct > 0.5) return 'medium'
   return 'low'
+}
+
+function matchesEntitySearch(entity: EntityListItem, rawQuery: string): boolean {
+  const query = rawQuery.trim().toUpperCase()
+  if (!query) return true
+
+  return (
+    entity.name.toUpperCase().includes(query) ||
+    entity.shortName.toUpperCase().includes(query) ||
+    entity.id.toUpperCase().includes(query)
+  )
 }
 
 export async function getEntities(filters?: EntityFilters): Promise<EntityListItem[]> {
@@ -105,6 +120,34 @@ export async function getEntities(filters?: EntityFilters): Promise<EntityListIt
   }
 
   return mapped
+}
+
+export async function getEntitiesPage(
+  filters: EntityListFilters = {}
+): Promise<PaginatedEntities> {
+  const pageSize = Math.max(1, filters.pageSize ?? ENTITY_LIST_PAGE_SIZE)
+  const baseEntities = await getEntities(
+    filters.type && filters.type.length > 0 ? { type: filters.type } : undefined
+  )
+  const entities = filters.q?.trim()
+    ? baseEntities.filter((entity) => matchesEntitySearch(entity, filters.q ?? ''))
+    : baseEntities
+  const total = entities.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const page = Math.min(Math.max(1, filters.page ?? 1), totalPages)
+  const start = (page - 1) * pageSize
+
+  return {
+    entities: entities.slice(start, start + pageSize),
+    total,
+    page,
+    pageSize,
+    totalPages,
+    summary: {
+      totalContracts: entities.reduce((sum, entity) => sum + entity.totalContracts, 0),
+      totalAlerts: entities.reduce((sum, entity) => sum + entity.activeAlerts, 0),
+    },
+  }
 }
 
 export async function getEntityById(id: string): Promise<Entity | null> {
@@ -196,15 +239,13 @@ export async function getEntityById(id: string): Promise<Entity | null> {
   }
 }
 
-const PAGE_SIZE = 15
-
 export async function getEntitySuppliers(
   id: string,
   filters: EntitySuppliersFilters = {}
 ): Promise<PaginatedSuppliers> {
   const safeId = id.replace(/'/g, "''")
   const page = Math.max(1, filters.page ?? 1)
-  const offset = (page - 1) * PAGE_SIZE
+  const offset = (page - 1) * ENTITY_SUPPLIERS_PAGE_SIZE
   const searchClause = filters.q?.trim()
     ? `AND s.name ILIKE '%${filters.q.trim().replace(/'/g, "''")}%'`
     : ''
@@ -217,7 +258,13 @@ export async function getEntitySuppliers(
     LIMIT 1
   `)
   if (nameRows.length === 0) {
-    return { suppliers: [], total: 0, page, pageSize: PAGE_SIZE, totalPages: 0 }
+    return {
+      suppliers: [],
+      total: 0,
+      page,
+      pageSize: ENTITY_SUPPLIERS_PAGE_SIZE,
+      totalPages: 0,
+    }
   }
 
   const rawBuyerId = String(nameRows[0].buyer_id ?? '').trim()
@@ -262,7 +309,7 @@ export async function getEntitySuppliers(
         ${searchClause}
       GROUP BY s.id, s.name
       ORDER BY total_amount DESC
-      LIMIT ${PAGE_SIZE} OFFSET ${offset}
+      LIMIT ${ENTITY_SUPPLIERS_PAGE_SIZE} OFFSET ${offset}
     `),
   ])
 
@@ -288,7 +335,7 @@ export async function getEntitySuppliers(
     suppliers,
     total,
     page,
-    pageSize: PAGE_SIZE,
-    totalPages: Math.ceil(total / PAGE_SIZE),
+    pageSize: ENTITY_SUPPLIERS_PAGE_SIZE,
+    totalPages: Math.ceil(total / ENTITY_SUPPLIERS_PAGE_SIZE),
   }
 }

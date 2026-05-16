@@ -5,7 +5,9 @@ import {
 } from '../supplier-identity'
 import type {
   Alert,
+  AlertListFilters,
   AlertDetail,
+  PaginatedAlerts,
   RiskLevel,
   Signal,
   SignalType,
@@ -14,6 +16,7 @@ import type {
 
 const CURRENCY = 'GTQ'
 const MAX_RISK_SCORE = 100
+const ALERTS_PAGE_SIZE = 20
 
 const SIGNAL_PRIORITY: SignalType[] = [
   'single_bidder',
@@ -276,7 +279,14 @@ function normalizePairSummaryRows(rows: PairSummaryRow[]): PairSummary[] {
 function parseAlertId(
   id: string
 ): { buyerId: string; supplierId: string; signalType: SignalType } | null {
-  const parts = id.split('::')
+  const normalizedId = (() => {
+    try {
+      return decodeURIComponent(id)
+    } catch {
+      return id
+    }
+  })()
+  const parts = normalizedId.split('::')
   if (parts.length !== 3) return null
 
   const [buyerId, supplierId, rawSignalType] = parts
@@ -483,9 +493,9 @@ async function runSingleBidderQuery(
       SUM(a.value_amount)                                          AS total_amount,
       COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
                           THEN a.id END)                           AS single_bidder_count,
-      ROUND(
+      (
         COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
-                            THEN a.id END)::DOUBLE / COUNT(DISTINCT a.id), 4
+                            THEN a.id END)::double precision / COUNT(DISTINCT a.id)
       )                                                            AS single_bidder_ratio
     FROM main m
     JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
@@ -502,7 +512,10 @@ async function runSingleBidderQuery(
     )}
     GROUP BY m.buyer_id, m.buyer_name, s.id, s.name
     HAVING COUNT(DISTINCT a.id) >= 5
-       AND single_bidder_ratio >= 0.60
+       AND (
+         COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
+                             THEN a.id END)::double precision / COUNT(DISTINCT a.id)
+       ) >= 0.60
   `)
 
   return rows
@@ -552,7 +565,7 @@ async function runShortDeadlineQuery(
       filters
     )}
     GROUP BY m.buyer_id, m.buyer_name, s.id, s.name
-    HAVING short_deadline_count >= 3
+    HAVING COUNT(DISTINCT a.id) >= 3
   `)
 
   return rows
@@ -584,11 +597,11 @@ async function runDirectPurchaseQuery(
         WHEN m."tender_procurementMethodDetails" ILIKE '%Art. 43%'
           OR m."tender_procurementMethodDetails" ILIKE '%Art. 54%'
         THEN a.id END)                                             AS direct_count,
-      ROUND(
+      (
         COUNT(DISTINCT CASE
           WHEN m."tender_procurementMethodDetails" ILIKE '%Art. 43%'
             OR m."tender_procurementMethodDetails" ILIKE '%Art. 54%'
-          THEN a.id END)::DOUBLE / COUNT(DISTINCT a.id), 4
+          THEN a.id END)::double precision / COUNT(DISTINCT a.id)
       )                                                            AS direct_ratio,
       SUM(a.value_amount)                                          AS total_amount
     FROM main m
@@ -603,7 +616,12 @@ async function runDirectPurchaseQuery(
     )}
     GROUP BY m.buyer_id, m.buyer_name
     HAVING COUNT(DISTINCT a.id) >= 20
-       AND direct_ratio >= 0.70
+       AND (
+         COUNT(DISTINCT CASE
+           WHEN m."tender_procurementMethodDetails" ILIKE '%Art. 43%'
+             OR m."tender_procurementMethodDetails" ILIKE '%Art. 54%'
+           THEN a.id END)::double precision / COUNT(DISTINCT a.id)
+       ) >= 0.70
   `)
 
   return rows
@@ -633,8 +651,8 @@ async function runAwardGapQuery(
       m.buyer_name                                                 AS buyer_name,
       COUNT(DISTINCT a.id)                                         AS total_awards,
       COUNT(DISTINCT c.id)                                         AS total_contracts,
-      ROUND(
-        1.0 - COUNT(DISTINCT c.id)::DOUBLE / COUNT(DISTINCT a.id), 4
+      (
+        1.0 - COUNT(DISTINCT c.id)::double precision / COUNT(DISTINCT a.id)
       )                                                            AS gap_ratio,
       SUM(a.value_amount)                                          AS total_amount
     FROM main m
@@ -650,7 +668,9 @@ async function runAwardGapQuery(
     )}
     GROUP BY m.buyer_id, m.buyer_name
     HAVING COUNT(DISTINCT a.id) >= 20
-       AND gap_ratio >= 0.85
+       AND (
+         1.0 - COUNT(DISTINCT c.id)::double precision / COUNT(DISTINCT a.id)
+       ) >= 0.85
   `)
 
   return rows
@@ -681,9 +701,9 @@ async function runFailedTendersQuery(
       COUNT(*)                                                     AS total_tenders,
       SUM(CASE WHEN m.tender_status IN ('withdrawn','unsuccessful')
                THEN 1 ELSE 0 END)                                  AS failed_count,
-      ROUND(
+      (
         SUM(CASE WHEN m.tender_status IN ('withdrawn','unsuccessful')
-                 THEN 1 ELSE 0 END)::DOUBLE / COUNT(*), 4
+                 THEN 1 ELSE 0 END)::double precision / COUNT(*)
       )                                                            AS failed_ratio
     FROM main m
     ${buildWhere(
@@ -696,7 +716,10 @@ async function runFailedTendersQuery(
     )}
     GROUP BY m.buyer_id, m.buyer_name
     HAVING COUNT(*) >= 20
-       AND failed_ratio >= 0.50
+       AND (
+         SUM(CASE WHEN m.tender_status IN ('withdrawn','unsuccessful')
+                  THEN 1 ELSE 0 END)::double precision / COUNT(*)
+       ) >= 0.50
   `)
 
   return rows
@@ -944,6 +967,25 @@ async function getCachedBuyerAlertSnapshot(buyerId: string): Promise<AlertSnapsh
 export async function getAlerts(): Promise<Alert[]> {
   const snapshot = await getCachedAlertSnapshot()
   return snapshot.alerts
+}
+
+export async function getAlertsPage(
+  filters: AlertListFilters = {}
+): Promise<PaginatedAlerts> {
+  const snapshot = await getCachedAlertSnapshot()
+  const pageSize = Math.max(1, filters.pageSize ?? ALERTS_PAGE_SIZE)
+  const total = snapshot.alerts.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const page = Math.min(Math.max(1, filters.page ?? 1), totalPages)
+  const start = (page - 1) * pageSize
+
+  return {
+    alerts: snapshot.alerts.slice(start, start + pageSize),
+    total,
+    page,
+    pageSize,
+    totalPages,
+  }
 }
 
 export async function getAlertById(id: string): Promise<AlertDetail | null> {

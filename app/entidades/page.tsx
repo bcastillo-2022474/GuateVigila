@@ -9,6 +9,8 @@ import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { EntityList } from '@/components/guatevigila/entity-list'
 import { Building2, FileText, AlertTriangle } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: META.pages.entidades.title,
   description: META.pages.entidades.description,
@@ -53,9 +55,11 @@ async function EntidadesContent({
   q: string
   initialPage: number
 }) {
-  const entities = await client.getEntities(types.length > 0 ? { type: types } : undefined)
-  const totalContracts = entities.reduce((sum, e) => sum + e.totalContracts, 0)
-  const totalAlerts = entities.reduce((sum, e) => sum + e.activeAlerts, 0)
+  const entitiesPage = await client.getEntitiesPage({
+    q,
+    type: types.length > 0 ? types : undefined,
+    page: initialPage,
+  })
 
   return (
     <>
@@ -67,7 +71,7 @@ async function EntidadesContent({
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Entidades Monitoreadas</p>
-              <p className="text-xl font-semibold text-foreground">{entities.length}</p>
+              <p className="text-xl font-semibold text-foreground">{entitiesPage.total}</p>
             </div>
           </div>
         </div>
@@ -79,7 +83,7 @@ async function EntidadesContent({
             <div>
               <p className="text-sm text-muted-foreground">Adjudicaciones Analizadas</p>
               <p className="text-xl font-semibold text-foreground">
-                {totalContracts.toLocaleString()}
+                {entitiesPage.summary.totalContracts.toLocaleString()}
               </p>
             </div>
           </div>
@@ -91,13 +95,24 @@ async function EntidadesContent({
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Alertas Activas</p>
-              <p className="text-xl font-semibold text-foreground">{totalAlerts}</p>
+              <p className="text-xl font-semibold text-foreground">
+                {entitiesPage.summary.totalAlerts}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <EntityList entities={entities} initialQ={q} initialTypes={types} initialPage={initialPage} />
+      <EntityList
+        key={`${q}:${types.join(',')}:${entitiesPage.page}`}
+        entities={entitiesPage.entities}
+        total={entitiesPage.total}
+        page={entitiesPage.page}
+        pageSize={entitiesPage.pageSize}
+        totalPages={entitiesPage.totalPages}
+        initialQ={q}
+        initialTypes={types}
+      />
     </>
   )
 }

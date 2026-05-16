@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState, useTransition } from 'react'
 import { useDebouncedCallback } from 'use-debounce'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import Fuse from 'fuse.js'
 import { Building2, ChevronRight, Search, Filter, X } from 'lucide-react'
 import type { EntityListItem, EntityType } from '@/lib/sdk/types'
 import { RiskBadge } from './risk-badge'
@@ -17,8 +16,6 @@ import {
   PaginationNext,
   PaginationEllipsis,
 } from '@/components/ui/pagination'
-
-const PAGE_SIZE = 20
 
 const ENTITY_TYPES: { value: EntityType; label: string }[] = [
   { value: 'ministerio', label: 'Ministerio' },
@@ -49,12 +46,23 @@ function buildUrl(
 
 interface EntityListProps {
   entities: EntityListItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
   initialQ: string
   initialTypes: EntityType[]
-  initialPage: number
 }
 
-export function EntityList({ entities, initialQ, initialTypes, initialPage }: EntityListProps) {
+export function EntityList({
+  entities,
+  total,
+  page,
+  pageSize,
+  totalPages,
+  initialQ,
+  initialTypes,
+}: EntityListProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -63,17 +71,6 @@ export function EntityList({ entities, initialQ, initialTypes, initialPage }: En
   const [q, setQ] = useState(initialQ)
   const [activeTypes, setActiveTypes] = useState<Set<EntityType>>(new Set(initialTypes))
   const [showTypeFilter, setShowTypeFilter] = useState(initialTypes.length > 0)
-  const [page, setPage] = useState(initialPage)
-
-  const fuse = useMemo(
-    () =>
-      new Fuse(entities, {
-        keys: ['name', 'shortName'],
-        threshold: 0.35,
-        ignoreLocation: true,
-      }),
-    [entities]
-  )
 
   const pushParams = useCallback(
     (overrides: Record<string, string | null>) => {
@@ -90,7 +87,6 @@ export function EntityList({ entities, initialQ, initialTypes, initialPage }: En
 
   const handleQ = (value: string) => {
     setQ(value)
-    setPage(1)
     debouncedPushQ(value)
   }
 
@@ -99,46 +95,30 @@ export function EntityList({ entities, initialQ, initialTypes, initialPage }: En
     if (next.has(type)) next.delete(type)
     else next.add(type)
     setActiveTypes(next)
-    setPage(1)
     pushParams({ type: next.size > 0 ? [...next].join(',') : null, page: null })
   }
 
   const clearAll = () => {
     setQ('')
     setActiveTypes(new Set())
-    setPage(1)
     pushParams({ q: null, type: null, page: null })
   }
 
   const goToPage = (p: number) => {
-    setPage(p)
     pushParams({ page: p === 1 ? null : String(p) })
   }
-
-  const filtered = useMemo(() => {
-    let result = entities
-    if (activeTypes.size > 0) result = result.filter((e) => activeTypes.has(e.type))
-    if (q.trim()) {
-      result = fuse
-        .search(q)
-        .map((r) => r.item)
-        .filter((e) => activeTypes.size === 0 || activeTypes.has(e.type))
-    }
-    return result
-  }, [entities, fuse, q, activeTypes])
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const safePage = Math.min(page, totalPages)
-  const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   const hasFilters = q.trim() || activeTypes.size > 0
 
   // Build page numbers with ellipsis: always show first, last, current ±1
   const pageNumbers = useMemo(() => {
     if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
-    const set = new Set([1, totalPages, safePage, safePage - 1, safePage + 1].filter((p) => p >= 1 && p <= totalPages))
+    const set = new Set([1, totalPages, page, page - 1, page + 1].filter((p) => p >= 1 && p <= totalPages))
     return [...set].sort((a, b) => a - b)
-  }, [totalPages, safePage])
+  }, [page, totalPages])
+
+  const startItem = total === 0 ? 0 : (page - 1) * pageSize + 1
+  const endItem = total === 0 ? 0 : startItem + entities.length - 1
 
   return (
     <>
@@ -213,12 +193,12 @@ export function EntityList({ entities, initialQ, initialTypes, initialPage }: En
         </div>
 
         <div className="divide-y divide-border">
-          {pageItems.length === 0 ? (
+          {entities.length === 0 ? (
             <div className="px-4 py-12 text-center text-muted-foreground text-sm">
               No se encontraron entidades con estos filtros.
             </div>
           ) : (
-            pageItems.map((entity) => (
+            entities.map((entity) => (
               <Link
                 key={entity.id}
                 href={`/entidades/${encodeURIComponent(entity.id)}`}
@@ -261,7 +241,7 @@ export function EntityList({ entities, initialQ, initialTypes, initialPage }: En
       {/* Footer: count + pagination */}
       <div className="flex flex-col items-center gap-4 mt-6">
         <p className="text-sm text-muted-foreground">
-          Mostrando {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} de {filtered.length} entidades
+          Mostrando {startItem}–{endItem} de {total} entidades
         </p>
 
         {totalPages > 1 && (
@@ -270,8 +250,8 @@ export function EntityList({ entities, initialQ, initialTypes, initialPage }: En
               <PaginationItem>
                 <PaginationPrevious
                   href="#"
-                  onClick={(e) => { e.preventDefault(); if (safePage > 1) goToPage(safePage - 1) }}
-                  className={safePage === 1 ? 'pointer-events-none opacity-40' : 'cursor-pointer'}
+                  onClick={(e) => { e.preventDefault(); if (page > 1) goToPage(page - 1) }}
+                  className={page === 1 ? 'pointer-events-none opacity-40' : 'cursor-pointer'}
                 />
               </PaginationItem>
 
@@ -288,7 +268,7 @@ export function EntityList({ entities, initialQ, initialTypes, initialPage }: En
                     <PaginationItem>
                       <PaginationLink
                         href="#"
-                        isActive={p === safePage}
+                        isActive={p === page}
                         onClick={(e) => { e.preventDefault(); goToPage(p) }}
                         className="cursor-pointer"
                       >
@@ -302,8 +282,8 @@ export function EntityList({ entities, initialQ, initialTypes, initialPage }: En
               <PaginationItem>
                 <PaginationNext
                   href="#"
-                  onClick={(e) => { e.preventDefault(); if (safePage < totalPages) goToPage(safePage + 1) }}
-                  className={safePage === totalPages ? 'pointer-events-none opacity-40' : 'cursor-pointer'}
+                  onClick={(e) => { e.preventDefault(); if (page < totalPages) goToPage(page + 1) }}
+                  className={page === totalPages ? 'pointer-events-none opacity-40' : 'cursor-pointer'}
                 />
               </PaginationItem>
             </PaginationContent>

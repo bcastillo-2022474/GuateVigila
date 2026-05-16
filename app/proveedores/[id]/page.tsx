@@ -50,6 +50,12 @@ function alertLabel(severity: RiskLevel) {
   return 'Bajo'
 }
 
+function getIndustryLabel(industry: string) {
+  return industry === 'Pendiente de clasificación'
+    ? 'Clasificación industrial pendiente'
+    : `Proveedor de ${industry}`
+}
+
 async function SupplierContent({ id, q, pageNum }: { id: string; q: string; pageNum: number }) {
   const [supplier, contractsResult] = await Promise.all([
     client.getSupplierById(id),
@@ -75,7 +81,7 @@ async function SupplierContent({ id, q, pageNum }: { id: string; q: string; page
           </nav>
           <h1 className="text-3xl font-bold mb-1">{supplier.name}</h1>
           <p className="text-base text-on-surface-variant">
-            Identificador: {supplier.nit} • Proveedor de {supplier.industry}
+            Identificador: {supplier.nit} • {getIndustryLabel(supplier.industry)}
           </p>
         </div>
         <div className="flex gap-4">
@@ -176,72 +182,88 @@ async function SupplierContent({ id, q, pageNum }: { id: string; q: string; page
             </span>
             Alertas Activas
           </h2>
-          {supplier.alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className={`bg-surface-container-lowest border border-outline-variant p-6 border-l-4 ${alertBorderColor(
-                alert.severity
-              )}`}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <span
-                  className={`px-2 py-0.5 text-[11px] font-semibold rounded uppercase ${alertBadgeClasses(
-                    alert.severity
-                  )}`}
-                >
-                  {alertLabel(alert.severity)}
-                </span>
-                <span className="text-[11px] text-on-surface-variant">{alert.date}</span>
-              </div>
-              <p className="text-base font-semibold mb-1">{alert.title}</p>
-              <p className="text-sm text-on-surface-variant">{alert.description}</p>
+          {supplier.alerts.length === 0 ? (
+            <div className="bg-surface-container-lowest border border-outline-variant p-6">
+              <p className="text-sm text-on-surface-variant">
+                Sin alertas activas para este proveedor en la cola actual.
+              </p>
             </div>
-          ))}
+          ) : (
+            supplier.alerts.map((alert) => (
+              <div
+                key={alert.id}
+                className={`bg-surface-container-lowest border border-outline-variant p-6 border-l-4 ${alertBorderColor(
+                  alert.severity
+                )}`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span
+                    className={`px-2 py-0.5 text-[11px] font-semibold rounded uppercase ${alertBadgeClasses(
+                      alert.severity
+                    )}`}
+                  >
+                    {alertLabel(alert.severity)}
+                  </span>
+                  <span className="text-[11px] text-on-surface-variant">{alert.date}</span>
+                </div>
+                <p className="text-base font-semibold mb-1">{alert.title}</p>
+                <p className="text-sm text-on-surface-variant">{alert.description}</p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
       <SupplierContracts result={contractsResult} initialQ={q} />
 
       <div className="mt-20">
-        <h2 className="text-xl font-semibold mb-6">Socios y Representantes</h2>
-        <div className="bg-surface-container-lowest border border-outline-variant overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-surface-container-low border-b border-outline-variant">
-              <tr>
-                <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">
-                  Nombre
-                </th>
-                <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">
-                  Rol
-                </th>
-                <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">
-                  Participación
-                </th>
-                <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">
-                  Otras Empresas
-                </th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {supplier.associates.map((associate) => (
-                <tr
-                  key={associate.id}
-                  className="border-b border-outline-variant hover:bg-surface-container-low transition-colors"
-                >
-                  <td className="p-4 font-medium">{associate.name}</td>
-                  <td className="p-4 text-on-surface-variant">{associate.role}</td>
-                  <td className="p-4">{associate.participation}</td>
-                  <td className="p-4">
-                    <span className="px-2 py-0.5 bg-surface-container-high rounded-full text-sm">
-                      {associate.otherCompanies} empresa
-                      {associate.otherCompanies !== 1 ? 's' : ''}
-                    </span>
-                  </td>
+        <h2 className="text-xl font-semibold mb-6">Proveedores Relacionados</h2>
+        {supplier.associates.length === 0 ? (
+          <div className="bg-surface-container-lowest border border-outline-variant p-6">
+            <p className="text-sm text-on-surface-variant">
+              Sin co-ganadores recurrentes detectados para este proveedor.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-surface-container-lowest border border-outline-variant overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-surface-container-low border-b border-outline-variant">
+                <tr>
+                  <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">
+                    Proveedor
+                  </th>
+                  <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">
+                    Vínculo
+                  </th>
+                  <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">
+                    Procesos Compartidos
+                  </th>
+                  <th className="p-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">
+                    Entidades Coincidentes
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="text-sm">
+                {supplier.associates.map((associate) => (
+                  <tr
+                    key={associate.id}
+                    className="border-b border-outline-variant hover:bg-surface-container-low transition-colors"
+                  >
+                    <td className="p-4 font-medium">{associate.name}</td>
+                    <td className="p-4 text-on-surface-variant">{associate.role}</td>
+                    <td className="p-4">{associate.participation}</td>
+                    <td className="p-4">
+                      <span className="px-2 py-0.5 bg-surface-container-high rounded-full text-sm">
+                        {associate.otherCompanies} empresa
+                        {associate.otherCompanies !== 1 ? 's' : ''}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </>
   )

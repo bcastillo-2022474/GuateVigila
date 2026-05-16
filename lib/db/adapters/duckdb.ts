@@ -22,11 +22,16 @@ const TABLES = [
 let ready: Promise<duckdb.DuckDBConnection> | null = null
 
 async function init(): Promise<duckdb.DuckDBConnection> {
+  const dataDir = DATA_DIR
+  if (!dataDir) {
+    throw new Error('Missing env variable: OCDS_DATA_DIR — see .env.local.example')
+  }
+
   const instance = await duckdb.DuckDBInstance.create(':memory:')
   const connection = await instance.connect()
 
   for (const table of TABLES) {
-    const file = path.join(DATA_DIR, `${table}.csv`)
+    const file = path.join(dataDir, `${table}.csv`)
     await connection.run(
       `CREATE TABLE ${table} AS SELECT * FROM read_csv_auto('${file}')`
     )

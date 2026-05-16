@@ -6,6 +6,17 @@ import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { StatsBar } from '@/components/guatevigila/stats-bar'
 import { AlertCard } from '@/components/guatevigila/alert-card'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: META.pages.alertas.title,
@@ -26,6 +37,10 @@ const jsonLd = {
   url: SITE.url,
 }
 
+interface PageProps {
+  searchParams: Promise<{ page?: string }>
+}
+
 async function StatsBarLoader() {
   const stats = await client.getGlobalStats()
   return (
@@ -33,14 +48,106 @@ async function StatsBarLoader() {
   )
 }
 
-async function AlertList() {
-  const alerts = await client.getAlerts()
+async function AlertList({ initialPage }: { initialPage: number }) {
+  const alertsPage = await client.getAlertsPage({ page: initialPage })
   return (
-    <div className="flex flex-col gap-4">
-      {alerts.map((alert) => (
-        <AlertCard key={alert.id} alert={alert} />
-      ))}
-    </div>
+    <AlertListContent
+      alerts={alertsPage.alerts}
+      total={alertsPage.total}
+      page={alertsPage.page}
+      pageSize={alertsPage.pageSize}
+      totalPages={alertsPage.totalPages}
+    />
+  )
+}
+
+function buildAlertPageUrl(page: number): string {
+  return page === 1 ? '/' : `/?page=${page}`
+}
+
+function getPageNumbers(page: number, totalPages: number): number[] {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1)
+
+  return [...new Set([1, totalPages, page - 1, page, page + 1])]
+    .filter((value) => value >= 1 && value <= totalPages)
+    .sort((a, b) => a - b)
+}
+
+function AlertListContent({
+  alerts,
+  total,
+  page,
+  pageSize,
+  totalPages,
+}: {
+  alerts: Awaited<ReturnType<typeof client.getAlertsPage>>['alerts']
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}) {
+  const pageNumbers = getPageNumbers(page, totalPages)
+  const startItem = total === 0 ? 0 : (page - 1) * pageSize + 1
+  const endItem = total === 0 ? 0 : startItem + alerts.length - 1
+
+  return (
+    <>
+      <div className="flex flex-col gap-4">
+        {alerts.map((alert) => (
+          <AlertCard key={alert.id} alert={alert} />
+        ))}
+      </div>
+
+      <div className="flex flex-col items-center gap-4 mt-6">
+        <p className="text-sm text-on-surface-variant">
+          Mostrando {startItem}–{endItem} de {total} alertas
+        </p>
+
+        {totalPages > 1 && (
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href={buildAlertPageUrl(Math.max(1, page - 1))}
+                  className={page === 1 ? 'pointer-events-none opacity-40' : undefined}
+                />
+              </PaginationItem>
+
+              {pageNumbers.map((pageNumber, index) => {
+                const previousPage = pageNumbers[index - 1]
+                const showEllipsis =
+                  previousPage !== undefined && pageNumber - previousPage > 1
+
+                return (
+                  <span key={pageNumber} className="flex items-center gap-1">
+                    {showEllipsis && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                    <PaginationItem>
+                      <PaginationLink
+                        href={buildAlertPageUrl(pageNumber)}
+                        isActive={pageNumber === page}
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </span>
+                )
+              })}
+
+              <PaginationItem>
+                <PaginationNext
+                  href={buildAlertPageUrl(Math.min(totalPages, page + 1))}
+                  className={page === totalPages ? 'pointer-events-none opacity-40' : undefined}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
+      </div>
+    </>
   )
 }
 
@@ -64,7 +171,10 @@ function AlertListSkeleton() {
   )
 }
 
-export default function AlertQueuePage() {
+export default async function AlertQueuePage({ searchParams }: PageProps) {
+  const { page } = await searchParams
+  const initialPage = Math.max(1, parseInt(page ?? '1', 10) || 1)
+
   return (
     <div className="min-h-screen bg-background">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -93,7 +203,7 @@ export default function AlertQueuePage() {
         </div>
 
         <Suspense fallback={<AlertListSkeleton />}>
-          <AlertList />
+          <AlertList initialPage={initialPage} />
         </Suspense>
 
         <div className="h-20" />

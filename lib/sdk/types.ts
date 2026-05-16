@@ -176,6 +176,25 @@ export interface EntityFilters {
   type?: EntityType[]
 }
 
+export interface AlertListFilters {
+  page?: number
+  pageSize?: number
+}
+
+export interface PaginatedAlerts {
+  alerts: Alert[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export interface EntityListFilters extends EntityFilters {
+  q?: string
+  page?: number
+  pageSize?: number
+}
+
 // Entity List Item (for explorer view)
 export interface EntityListItem {
   id: string
@@ -187,6 +206,24 @@ export interface EntityListItem {
   currency: string
   activeAlerts: number
   riskLevel: RiskLevel
+}
+
+export interface PaginatedEntities {
+  entities: EntityListItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+  summary: {
+    totalContracts: number
+    totalAlerts: number
+  }
+}
+
+export interface SupplierListFilters {
+  q?: string
+  page?: number
+  pageSize?: number
 }
 
 // Supplier List Item (for explorer view)
@@ -203,19 +240,34 @@ export interface SupplierListItem {
   singleBidderPercentage: number
 }
 
+export interface PaginatedSupplierList {
+  suppliers: SupplierListItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+  summary: {
+    totalContracts: number
+    highRiskSuppliers: number
+  }
+}
+
 // SDK Client Interface
 export interface GuateVigilaSDK {
   // Alerts
   getAlerts(): Promise<Alert[]>
+  getAlertsPage(filters?: AlertListFilters): Promise<PaginatedAlerts>
   getAlertById(id: string): Promise<AlertDetail | null>
   
   // Entities
   getEntities(filters?: EntityFilters): Promise<EntityListItem[]>
+  getEntitiesPage(filters?: EntityListFilters): Promise<PaginatedEntities>
   getEntityById(id: string): Promise<Entity | null>
   getEntitySuppliers(id: string, filters?: EntitySuppliersFilters): Promise<PaginatedSuppliers>
   
   // Suppliers
   getSuppliers(): Promise<SupplierListItem[]>
+  getSuppliersPage(filters?: SupplierListFilters): Promise<PaginatedSupplierList>
   getSupplierById(id: string): Promise<Supplier | null>
   getSupplierContracts(id: string, filters?: SupplierContractsFilters): Promise<PaginatedSupplierContracts>
   
