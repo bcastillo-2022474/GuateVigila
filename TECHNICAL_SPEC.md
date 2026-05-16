@@ -6,25 +6,25 @@
 
 ## Stack tecnológico
 
-### Backend — Pipeline de datos
-- **Lenguaje:** Python 3.12
-- **Procesamiento:** DuckDB (queries SQL sobre CSV directamente, sin cargar en memoria)
-- **Scheduler:** script cron o GitHub Actions para re-procesar semanalmente
-- **Salida:** JSON estático generado en build time
-
-### Frontend
-- **Framework:** Next.js 14 (App Router)
+### Frontend + Backend
+- **Framework:** Next.js 15 (App Router)
 - **Estilos:** Tailwind CSS
-- **Deploy:** Vercel (gratis, suficiente para el hackathon)
+- **Lenguaje:** TypeScript
+- **Deploy:** Vercel
+
+### Base de datos
+- **Motor:** DuckDB (`@duckdb/node-api`) — embebido en el proceso de Next.js
+- **Datos:** CSV OCDS cargados en memoria al arrancar el servidor, consultados con SQL estándar
+- **Sin ETL:** no hay pipeline separado ni archivos intermedios — Next.js consulta los CSV directamente
 
 ### IA — Borrador periodístico
 - **Proveedor:** MiniMax (disponible como perk del hackathon)
-- **Fallback:** Claude API via OpenRouter (también disponible como perk)
-- **Estrategia:** llamada on-demand cuando el usuario hace click en "Generar borrador", no en build time
+- **Fallback:** Claude API via OpenRouter
+- **Estrategia:** llamada on-demand cuando el usuario hace click en "Generar borrador"
 
 ### Datos
-- **Fuente principal:** OCDS Guatecompras vía `data.open-contracting.org`
-- **Formato:** CSV por año (2020–2024), descargado una vez y procesado localmente
+- **Fuente principal:** OCDS Guatecompras, Ministerio de Finanzas de Guatemala
+- **Formato:** CSV por año (2020–2024), descargados una vez y montados localmente
 - **Licencia:** CC BY 4.0
 
 ---
@@ -32,22 +32,25 @@
 ## Arquitectura general
 
 ```
-[OCDS CSV 2020-2024]
+[OCDS CSV 2020-2024]  ←  montados localmente
         │
         ▼
-[Pipeline Python / DuckDB]
-        │  detección de señales
-        │  cálculo de scores
+[DuckDB en memoria]   ←  cargado al arrancar Next.js (lazy, singleton)
+        │  SQL queries directas sobre los CSV
         ▼
-[alerts.json + entities.json + suppliers.json]  ← archivos estáticos
+[lib/sdk/queries/]    ←  una función por recurso (entities, suppliers, alerts, stats)
         │
         ▼
-[Next.js Frontend]
-        │  lee JSON en build time (ISR cada 24h)
-        │  llama MiniMax API on-demand para borradores
+[lib/sdk/client.ts]   ←  objeto `client` que agrupa todas las queries
+        │
         ▼
-[Usuario final — sin login, sin DB]
+[Next.js Server Components]  ←  llaman client.getEntityById(id), etc.
+        │  datos pasados como props a Client Components
+        ▼
+[Usuario final — sin login, sin API routes de datos]
 ```
+
+No hay pipeline separado, no hay archivos JSON generados, no hay backend independiente. Todo corre dentro del proceso de Next.js. DuckDB se inicializa una vez en el primer request y reutiliza la conexión para los siguientes.
 
 La arquitectura es deliberadamente simple: el pipeline corre offline, genera JSON estático, y el frontend los consume. No hay base de datos en producción. No hay autenticación. No hay estado del lado del servidor.
 
@@ -303,23 +306,19 @@ def calculate_risk_score(signals: list[dict]) -> int:
 
 ---
 
-## API del frontend
+## Capa de datos
 
-El frontend consume archivos JSON estáticos ubicados en `/public/data/`. No hay API dinámica.
+No hay archivos JSON estáticos ni API routes de datos. Los Server Components de Next.js llaman directamente al SDK:
 
-```
-/public/data/
-  alerts.json          # todas las alertas, ordenadas por risk_score desc
-  entities/
-    index.json         # listado de entidades con métricas básicas
-    {buyer_id}.json    # perfil completo de cada entidad
-  suppliers/
-    index.json         # listado de proveedores con métricas básicas
-    {supplier_id}.json # perfil completo de cada proveedor
-  meta.json            # fecha de última actualización, totales
+```ts
+// En cualquier Server Component:
+import { client } from '@/lib/sdk'
+
+const entity = await client.getEntityById(id)
+const [alerts, stats] = await Promise.all([client.getAlerts(), client.getGlobalStats()])
 ```
 
-La búsqueda de texto en el frontend se hace con un índice en memoria (Fuse.js) sobre `alerts.json` y los índices. No requiere backend.
+El SDK resuelve cada llamada con una query SQL sobre DuckDB. Los Client Components reciben los datos como props — nunca llaman al SDK directamente.
 
 ### Endpoint de IA — Borrador periodístico
 
@@ -368,26 +367,32 @@ Detalle: ${JSON.stringify(alert.signals)}
 ## Estructura del repositorio
 
 ```
-guatevigila/
-├── pipeline/
-│   ├── download.sh          # descarga CSVs del OCDS
-│   ├── detect.py            # lógica de detección (DuckDB)
-│   ├── score.py             # cálculo de risk score
-│   ├── export.py            # genera JSON estáticos
-│   └── requirements.txt
+guate-vigila/
+├── app/                        # Next.js App Router
+│   ├── page.tsx                # Cola de alertas (vista de entrada)
+│   ├── alertas/[id]/           # Detalle de alerta
+│   ├── entidades/
+│   │   ├── page.tsx            # Explorador de entidades
+│   │   └── [id]/               # Perfil de entidad
+│   └── proveedores/
+│       ├── page.tsx            # Explorador de proveedores
+│       └── [id]/               # Perfil de proveedor
 │
-├── web/                     # Next.js app
-│   ├── app/
-│   │   ├── page.tsx         # cola de alertas
-│   │   ├── alert/[id]/      # detalle de alerta
-│   │   ├── entity/[id]/     # perfil de entidad
-│   │   ├── supplier/[id]/   # perfil de proveedor
-│   │   └── api/draft/       # endpoint borrador IA
-│   ├── public/data/         # JSON generados por el pipeline
-│   └── package.json
+├── components/guatevigila/     # Componentes de UI compartidos
+│
+├── lib/
+│   ├── db.ts                   # Cliente DuckDB (singleton, lazy init, carga CSV)
+│   └── sdk/
+│       ├── client.ts           # Objeto `client` — punto de entrada único
+│       ├── queries/
+│       │   ├── alerts.ts       # getAlerts, getAlertById
+│       │   ├── entities.ts     # getEntities, getEntityById
+│       │   ├── suppliers.ts    # getSuppliers, getSupplierById
+│       │   └── stats.ts        # getGlobalStats
+│       └── types.ts
 │
 ├── README.md
-└── LICENSE                  # MIT
+└── LICENSE                     # MIT
 ```
 
 ---
@@ -396,17 +401,17 @@ guatevigila/
 
 | Persona | Rol | Tareas |
 |---|---|---|
-| 1 (Claude Code) | Pipeline | `download.sh` + señales 1, 2, 3 en DuckDB + `export.py` |
-| 2 (Claude Code) | Pipeline + API IA | Señales 4, 5 + score.py + endpoint `/api/draft` |
+| 1 | Data + SDK | Queries DuckDB: señales 1, 2, 3 + `lib/sdk/queries/` |
+| 2 | Data + API IA | Señales 4, 5 + score de riesgo + endpoint `/api/draft` |
 | 3 | Frontend | Cola de alertas + detalle de alerta + búsqueda |
 | 4 | Frontend + QA | Perfil entidad + perfil proveedor + deploy Vercel |
 
 **Hitos:**
 
-- **T+8h:** Pipeline corriendo, genera alerts.json con datos reales
+- **T+8h:** Queries DuckDB funcionando, SDK retorna datos reales
 - **T+16h:** Frontend muestra alertas reales, detalle funcional
 - **T+24h:** Perfiles de entidad y proveedor funcionando
-- **T+36h:** Borrador IA integrado, exportación JSON
+- **T+36h:** Borrador IA integrado
 - **T+44h:** QA completo, deploy en Vercel con dominio
 - **T+48h:** Demo lista
 
@@ -445,31 +450,29 @@ Los umbrales pueden ajustarse. El código los expone como constantes configurabl
 ## Deploy
 
 ```bash
-# 1. Clonar y configurar
-git clone https://github.com/guatevigila/guatevigila
-cd guatevigila
+# 1. Clonar e instalar
+git clone https://github.com/bcastillo-2022474/guate-vigila
+cd guate-vigila
+pnpm install
 
-# 2. Correr pipeline (requiere Python 3.12 + pip)
-cd pipeline
-pip install -r requirements.txt
-bash download.sh        # descarga CSVs (~2GB, solo primera vez)
-python detect.py        # genera alertas
-python score.py         # calcula scores
-python export.py        # genera JSON en ../web/public/data/
+# 2. Configurar ruta de datos en lib/db.ts
+#    DATA_DIR debe apuntar a la carpeta con los CSV del OCDS
+const DATA_DIR = '/ruta/a/tu/carpeta/2024'
 
-# 3. Correr frontend
-cd ../web
-npm install
-npm run dev             # localhost:3000
+# 3. Correr en desarrollo
+pnpm dev    # localhost:3000
+            # primer request tarda ~10-30s mientras DuckDB carga los CSV
 
-# 4. Deploy
-vercel deploy --prod    # requiere cuenta Vercel (gratis)
+# 4. Deploy en Vercel
+vercel deploy --prod
 ```
 
 Variables de entorno requeridas:
 ```
 MINIMAX_API_KEY=...
 ```
+
+> **Nota sobre Vercel:** DuckDB requiere acceso a los archivos CSV en el servidor. En producción, los CSV deben estar disponibles en el filesystem del servidor (o montados via volumen). La capa serverless de Vercel tiene limitaciones de memoria — evaluar uso de Vercel Functions con memoria extendida o migrar a un servidor dedicado si el dataset crece.
 
 ---
 
