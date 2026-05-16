@@ -81,6 +81,7 @@ export interface SupplierContract {
   id: string
   supplierId: string
   supplierName: string
+  supplierNit: string | null
   contractCount: number
   totalAmount: number
   currency: string

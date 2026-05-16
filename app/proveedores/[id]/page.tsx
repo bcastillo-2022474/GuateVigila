@@ -83,7 +83,7 @@ async function SupplierContent({ id, q, pageNum }: { id: string; q: string; page
             rel="noopener noreferrer"
             className="border border-outline-variant text-primary px-6 py-2 rounded-sm text-xs font-semibold hover:bg-surface-container-low transition-colors flex items-center gap-2"
           >
-            Buscar en Registro Mercantil
+            Registro Mercantil
             <span className="material-symbols-outlined text-lg">open_in_new</span>
           </a>
         </div>
