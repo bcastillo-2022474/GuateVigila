@@ -9,6 +9,7 @@ import type { Entity, PaginatedSuppliers } from '@/lib/sdk/types'
 import { MetricCard } from '@/components/guatevigila/metric-card'
 import { RiskBadge } from '@/components/guatevigila/risk-badge'
 import { EntityGraph } from './entity-graph'
+import { entitySearchUrl } from '@/lib/guatecompras/urls'
 import {
   Pagination,
   PaginationContent,
@@ -191,7 +192,7 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
                     suppliers.map((supplier) => (
                       <tr key={supplier.id} className="hover:bg-surface-container-low transition-colors">
                         <td className="px-6 py-4 text-base">
-                          <Link href={`/proveedores/${supplier.supplierId}`} className="hover:text-primary hover:underline">
+                          <Link href={`/proveedores/${encodeURIComponent(supplier.supplierId)}`} className="hover:text-primary hover:underline">
                             {supplier.supplierName}
                           </Link>
                         </td>
@@ -267,7 +268,7 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
 
       <footer className="flex justify-center">
         <a
-          href="https://www.guatecompras.gt"
+          href={entitySearchUrl(entity.name)}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1 text-xs font-semibold tracking-widest uppercase text-on-surface-variant hover:text-primary transition-colors border border-outline-variant px-6 py-4"

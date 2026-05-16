@@ -145,7 +145,7 @@ async function AlertContent({ id }: { id: string }) {
                 rel="noopener noreferrer"
                 className="w-full border border-outline-variant bg-surface-container-lowest text-on-surface text-xs font-semibold py-2 px-4 flex justify-between items-center hover:bg-surface-container-low transition-colors"
               >
-                Ver contratos en Guatecompras
+                Ver en Guatecompras
                 <span className="material-symbols-outlined text-lg">open_in_new</span>
               </a>
               <Link

@@ -37,7 +37,7 @@ export function RiskBadge({ level, size = 'sm' }: RiskBadgeProps) {
       case 'low':
         return 'BAJO'
       default:
-        return level.toUpperCase()
+        return (level satisfies never, 'DESCONOCIDO')
     }
   }
 
