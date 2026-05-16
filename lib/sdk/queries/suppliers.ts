@@ -14,7 +14,8 @@ import {
 import { getSupplierAlertsBySupplierId } from './alerts'
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-const VALID_TENDER_YEAR_FILTER = 'year(m.tender_tenderPeriod_startDate) > 2000'
+const VALID_TENDER_YEAR_FILTER =
+  'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000'
 
 interface SupplierSummaryRow {
   supplier_id: string
@@ -47,13 +48,13 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
   const [summaryRows, yearlyRows, alerts] = await Promise.all([
     query<SupplierSummaryRow>(`
       SELECT
-        s.id                                                        AS supplier_id,
-        MAX(s.name)                                                 AS supplier_name,
-        COUNT(DISTINCT a.id)                                        AS total_awards,
-        SUM(a.value_amount)                                         AS total_amount,
-        COUNT(DISTINCT m.buyer_id)                                  AS client_entities,
-        COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
-                            THEN a.id END)                          AS single_bidder_count
+        s.id AS supplier_id,
+        MAX(s.name) AS supplier_name,
+        COUNT(DISTINCT a.id) AS total_awards,
+        COALESCE(SUM(a.value_amount), 0) AS total_amount,
+        COUNT(DISTINCT m.buyer_id) AS client_entities,
+        COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
+                            THEN a.id END) AS single_bidder_count
       FROM awards_suppliers s
       JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
       JOIN main m ON m.ocid = a.main_ocid
@@ -63,9 +64,9 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
     `),
     query<SupplierYearlyRow>(`
       SELECT
-        year(m.tender_tenderPeriod_startDate)                       AS year,
-        COUNT(DISTINCT a.id)                                        AS contract_count,
-        SUM(a.value_amount)                                         AS amount
+        EXTRACT(year FROM m."tender_tenderPeriod_startDate") AS year,
+        COUNT(DISTINCT a.id) AS contract_count,
+        COALESCE(SUM(a.value_amount), 0) AS amount
       FROM awards_suppliers s
       JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
       JOIN main m ON m.ocid = a.main_ocid
@@ -82,19 +83,19 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
 
   const totalContracts = Number(summary.total_awards ?? 0)
   const singleBidderCount = Number(summary.single_bidder_count ?? 0)
+  const supplierId = String(summary.supplier_id)
 
   return {
-    id: String(summary.supplier_id),
-    name: String(summary.supplier_name ?? summary.supplier_id),
-    nit: getSupplierDisplayIdentifier(String(summary.supplier_id)),
+    id: supplierId,
+    name: String(summary.supplier_name ?? supplierId),
+    nit: getSupplierDisplayIdentifier(supplierId),
     industry: 'Pendiente de clasificación',
     totalContracts,
     totalAwarded: Number(summary.total_amount ?? 0),
     currency: 'GTQ',
     clientEntities: Number(summary.client_entities ?? 0),
-    singleBidderPercentage: totalContracts > 0
-      ? Math.round((singleBidderCount / totalContracts) * 100)
-      : 0,
+    singleBidderPercentage:
+      totalContracts > 0 ? Math.round((singleBidderCount / totalContracts) * 100) : 0,
     period: '2020-2024',
     yearlyData: yearlyRows.map((row) => ({
       year: Number(row.year),
@@ -103,7 +104,7 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
     })),
     alerts,
     associates: [],
-    registroMercantilUrl: buildRegistroMercantilUrl(String(summary.supplier_id)),
+    registroMercantilUrl: buildRegistroMercantilUrl(supplierId),
   }
 }
 
@@ -131,7 +132,7 @@ export async function getSupplierContracts(
     query<{ total: number }>(`
       SELECT COUNT(DISTINCT m.buyer_id) AS total
       FROM main m
-      JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
+      JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
       JOIN awards_suppliers s ON s.awards_id = a.id
       WHERE s.id = '${safeId}'
         AND ${VALID_TENDER_YEAR_FILTER}
@@ -146,14 +147,14 @@ export async function getSupplierContracts(
       single_bidder_count: number
     }>(`
       SELECT
-        m.buyer_id                                                     AS entity_id,
-        m.buyer_name                                                   AS entity_name,
-        COUNT(DISTINCT a.id)                                           AS contract_count,
-        SUM(a.value_amount)                                            AS total_amount,
-        COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
-                            THEN a.id END)                             AS single_bidder_count
+        m.buyer_id AS entity_id,
+        m.buyer_name AS entity_name,
+        COUNT(DISTINCT a.id) AS contract_count,
+        COALESCE(SUM(a.value_amount), 0) AS total_amount,
+        COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
+                            THEN a.id END) AS single_bidder_count
       FROM main m
-      JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
+      JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
       JOIN awards_suppliers s ON s.awards_id = a.id
       WHERE s.id = '${safeId}'
         AND ${VALID_TENDER_YEAR_FILTER}
@@ -165,18 +166,18 @@ export async function getSupplierContracts(
   ])
 
   const total = Number(totalRows[0]?.total ?? 0)
-  const contracts = contractRows.map((r) => {
-    const count = Number(r.contract_count)
-    const amt = Number(r.total_amount)
-    const singlePct = count > 0 ? Number(r.single_bidder_count) / count : 0
+  const contracts = contractRows.map((row) => {
+    const count = Number(row.contract_count ?? 0)
+    const amount = Number(row.total_amount ?? 0)
+    const singlePct = count > 0 ? Number(row.single_bidder_count ?? 0) / count : 0
     return {
-      id: `${id}-${r.entity_id}`,
-      entityId: String(r.entity_id),
-      entityName: r.entity_name,
+      id: `${id}-${row.entity_id}`,
+      entityId: String(row.entity_id),
+      entityName: row.entity_name,
       contractCount: count,
-      totalAmount: amt,
+      totalAmount: amount,
       currency: 'GTQ',
-      riskLevel: riskLevel(singlePct, amt),
+      riskLevel: riskLevel(singlePct, amount),
     }
   })
 

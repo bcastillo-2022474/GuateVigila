@@ -6,7 +6,8 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import type { Entity, PaginatedSuppliers } from '@/lib/sdk/types'
-import { MetricCard, RiskBadge } from '@/components/guatevigila'
+import { MetricCard } from '@/components/guatevigila/metric-card'
+import { RiskBadge } from '@/components/guatevigila/risk-badge'
 import { EntityGraph } from './entity-graph'
 import {
   Pagination,
@@ -68,7 +69,7 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
     return amount.toLocaleString('es-GT')
   }
 
-  const maxAmount = Math.max(...entity.yearlyData.map((d) => d.amount))
+  const maxAmount = Math.max(0, ...entity.yearlyData.map((d) => d.amount))
 
   const pageNumbers = (() => {
     if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -97,7 +98,7 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
           </div>
           <div className="flex items-end gap-4 h-48 w-full border-b border-outline-variant pb-1">
             {entity.yearlyData.map((data, idx) => {
-              const heightPercent = (data.amount / maxAmount) * 100
+              const heightPercent = maxAmount > 0 ? (data.amount / maxAmount) * 100 : 0
               const isLatest = idx === entity.yearlyData.length - 1
               return (
                 <div

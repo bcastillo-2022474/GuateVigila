@@ -443,13 +443,13 @@ async function runPairSummaryQuery(
       s.name                                                       AS supplier_name,
       COUNT(DISTINCT a.id)                                         AS contract_count,
       SUM(a.value_amount)                                          AS total_amount,
-      MAX(year(m.tender_tenderPeriod_startDate))                   AS latest_year
+      MAX(EXTRACT(year FROM m."tender_tenderPeriod_startDate"))    AS latest_year
     FROM main m
     JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
     JOIN awards_suppliers s ON s.awards_id = a.id
     ${buildWhere(
       [
-        'year(m.tender_tenderPeriod_startDate) > 2000',
+        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
         'm.buyer_id IS NOT NULL',
         'm.buyer_name IS NOT NULL',
         's.id IS NOT NULL',
@@ -481,10 +481,10 @@ async function runSingleBidderQuery(
       s.name                                                       AS supplier_name,
       COUNT(DISTINCT a.id)                                         AS total_contracts,
       SUM(a.value_amount)                                          AS total_amount,
-      COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
+      COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
                           THEN a.id END)                           AS single_bidder_count,
       ROUND(
-        COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
+        COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
                             THEN a.id END)::DOUBLE / COUNT(DISTINCT a.id), 4
       )                                                            AS single_bidder_ratio
     FROM main m
@@ -492,7 +492,7 @@ async function runSingleBidderQuery(
     JOIN awards_suppliers s ON s.awards_id = a.id
     ${buildWhere(
       [
-        'year(m.tender_tenderPeriod_startDate) > 2000',
+        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
         'm.buyer_id IS NOT NULL',
         'm.buyer_name IS NOT NULL',
         's.id IS NOT NULL',
@@ -541,9 +541,9 @@ async function runShortDeadlineQuery(
     JOIN awards_suppliers s ON s.awards_id = a.id
     ${buildWhere(
       [
-        'year(m.tender_tenderPeriod_startDate) > 2000',
-        'year(m.tender_tenderPeriod_endDate) > 2000',
-        "DATEDIFF('hour', m.tender_tenderPeriod_startDate::TIMESTAMP, m.tender_tenderPeriod_endDate::TIMESTAMP) < 72",
+        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
+        'EXTRACT(year FROM m."tender_tenderPeriod_endDate") > 2000',
+        `(m."tender_tenderPeriod_endDate"::timestamp - m."tender_tenderPeriod_startDate"::timestamp) < INTERVAL '72 hours'`,
         'm.buyer_id IS NOT NULL',
         'm.buyer_name IS NOT NULL',
         's.id IS NOT NULL',
@@ -581,13 +581,13 @@ async function runDirectPurchaseQuery(
       m.buyer_name                                                 AS buyer_name,
       COUNT(DISTINCT a.id)                                         AS total_awards,
       COUNT(DISTINCT CASE
-        WHEN m.tender_procurementMethodDetails ILIKE '%Art. 43%'
-          OR m.tender_procurementMethodDetails ILIKE '%Art. 54%'
+        WHEN m."tender_procurementMethodDetails" ILIKE '%Art. 43%'
+          OR m."tender_procurementMethodDetails" ILIKE '%Art. 54%'
         THEN a.id END)                                             AS direct_count,
       ROUND(
         COUNT(DISTINCT CASE
-          WHEN m.tender_procurementMethodDetails ILIKE '%Art. 43%'
-            OR m.tender_procurementMethodDetails ILIKE '%Art. 54%'
+          WHEN m."tender_procurementMethodDetails" ILIKE '%Art. 43%'
+            OR m."tender_procurementMethodDetails" ILIKE '%Art. 54%'
           THEN a.id END)::DOUBLE / COUNT(DISTINCT a.id), 4
       )                                                            AS direct_ratio,
       SUM(a.value_amount)                                          AS total_amount
@@ -595,7 +595,7 @@ async function runDirectPurchaseQuery(
     JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
     ${buildWhere(
       [
-        'year(m.tender_tenderPeriod_startDate) > 2000',
+        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
         'm.buyer_id IS NOT NULL',
         'm.buyer_name IS NOT NULL',
       ],
@@ -642,7 +642,7 @@ async function runAwardGapQuery(
     LEFT JOIN contracts c ON c.main_ocid = m.ocid
     ${buildWhere(
       [
-        'year(m.tender_tenderPeriod_startDate) > 2000',
+        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
         'm.buyer_id IS NOT NULL',
         'm.buyer_name IS NOT NULL',
       ],
@@ -688,7 +688,7 @@ async function runFailedTendersQuery(
     FROM main m
     ${buildWhere(
       [
-        'year(m.tender_tenderPeriod_startDate) > 2000',
+        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
         'm.buyer_id IS NOT NULL',
         'm.buyer_name IS NOT NULL',
       ],

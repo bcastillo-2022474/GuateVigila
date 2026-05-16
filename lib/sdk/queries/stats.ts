@@ -1,5 +1,5 @@
-import type { GlobalStats } from '../types'
 import { query } from '@/lib/db'
+import type { GlobalStats } from '../types'
 import { getActiveAlertCount } from './alerts'
 
 export async function getGlobalStats(): Promise<GlobalStats> {
@@ -11,13 +11,13 @@ export async function getGlobalStats(): Promise<GlobalStats> {
       period_end: number
     }>(`
       SELECT
-        COUNT(DISTINCT m.ocid)                        AS processes,
-        SUM(a.value_amount)                           AS total_amount,
-        MIN(year(m.tender_tenderPeriod_startDate))    AS period_start,
-        MAX(year(m.tender_tenderPeriod_startDate))    AS period_end
+        COUNT(DISTINCT m.ocid) AS processes,
+        COALESCE(SUM(a.value_amount), 0) AS total_amount,
+        MIN(EXTRACT(year FROM m."tender_tenderPeriod_startDate")) AS period_start,
+        MAX(EXTRACT(year FROM m."tender_tenderPeriod_startDate")) AS period_end
       FROM main m
       JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-      WHERE year(m.tender_tenderPeriod_startDate) > 2000
+      WHERE EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
     `),
     getActiveAlertCount(),
   ])
