@@ -81,6 +81,7 @@ export interface SupplierContract {
   id: string
   supplierId: string
   supplierName: string
+  supplierNit: string | null
   contractCount: number
   totalAmount: number
   currency: string
@@ -188,10 +189,25 @@ export interface SupplierListItem {
   singleBidderPercentage: number
 }
 
+export interface AlertFilters {
+  signal?: string
+  year?: string
+  entity?: string
+  page?: number
+}
+
+export interface PaginatedAlerts {
+  alerts: Alert[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
 // SDK Client Interface
 export interface GuateVigilaSDK {
   // Alerts
-  getAlerts(): Promise<Alert[]>
+  getAlerts(filters?: AlertFilters): Promise<PaginatedAlerts>
   getAlertById(id: string): Promise<AlertDetail | null>
   
   // Entities

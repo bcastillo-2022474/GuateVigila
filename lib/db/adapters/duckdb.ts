@@ -3,6 +3,7 @@ import path from 'path'
 
 const DATA_DIR = process.env.OCDS_DATA_DIR
 if (!DATA_DIR) throw new Error('Missing env variable: OCDS_DATA_DIR — see .env.local.example')
+const DATA_DIR_SAFE: string = DATA_DIR
 
 const TABLES = [
   'main',
@@ -26,7 +27,7 @@ async function init(): Promise<duckdb.DuckDBConnection> {
   const connection = await instance.connect()
 
   for (const table of TABLES) {
-    const file = path.join(DATA_DIR, `${table}.csv`)
+    const file = path.join(DATA_DIR_SAFE, `${table}.csv`)
     await connection.run(
       `CREATE TABLE ${table} AS SELECT * FROM read_csv_auto('${file}')`
     )

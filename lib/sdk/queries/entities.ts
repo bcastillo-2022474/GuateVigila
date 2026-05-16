@@ -199,12 +199,14 @@ export async function getEntitySuppliers(
 
     query<{
       supplier_name: string
+      supplier_nit: string | null
       contract_count: number
       total_amount: number
       single_bidder_count: number
     }>(`
       SELECT
         s.name                                                         AS supplier_name,
+        MAX(p.identifier_id)                                           AS supplier_nit,
         COUNT(DISTINCT a.id)                                           AS contract_count,
         SUM(a.value_amount)                                            AS total_amount,
         COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
@@ -212,6 +214,9 @@ export async function getEntitySuppliers(
       FROM main m
       JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
       JOIN awards_suppliers s ON s.awards_id = a.id
+      LEFT JOIN parties p     ON p.main_ocid = s.main_ocid
+                              AND p.name = s.name
+                              AND p.identifier_scheme = 'GT-NIT'
       WHERE m.buyer_name = '${safeName}'
         ${searchClause}
       GROUP BY s.name
@@ -229,6 +234,7 @@ export async function getEntitySuppliers(
       id: `${id}-${r.supplier_name}`,
       supplierId: r.supplier_name,
       supplierName: r.supplier_name,
+      supplierNit: r.supplier_nit ?? null,
       contractCount: count,
       totalAmount: amt,
       currency: 'GTQ',
