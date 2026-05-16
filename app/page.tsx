@@ -29,14 +29,7 @@ const jsonLd = {
 async function StatsBarLoader() {
   const stats = await client.getGlobalStats()
   return (
-    <StatsBar
-      processesAnalyzed={stats.processesAnalyzed}
-      totalAmount={stats.totalAmount}
-      currency={stats.currency}
-      periodStart={stats.periodStart}
-      periodEnd={stats.periodEnd}
-      activeAlerts={stats.activeAlerts}
-    />
+    <StatsBar stats={stats} />
   )
 }
 

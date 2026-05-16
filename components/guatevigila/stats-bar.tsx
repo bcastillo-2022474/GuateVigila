@@ -1,27 +1,15 @@
+import type { GlobalStats } from '@/lib/sdk/types'
+
 interface StatsBarProps {
-  processesAnalyzed: number
-  totalAmount: number
-  currency: string
-  periodStart: number
-  periodEnd: number
-  activeAlerts: number
+  stats: GlobalStats
 }
 
-export function StatsBar({
-  processesAnalyzed = 0,
-  totalAmount = 0,
-  currency = '',
-  periodStart,
-  periodEnd,
-  activeAlerts = 0,
-}: StatsBarProps) {
+export function StatsBar({ stats }: StatsBarProps) {
+  const { processesAnalyzed = 0, totalAmount = 0, currency = '', periodStart, periodEnd, activeAlerts = 0 } = stats
+
   const formatNumber = (num: number) => {
-    if (num >= 1_000_000_000) {
-      return `${(num / 1_000_000_000).toFixed(1)}B`
-    }
-    if (num >= 1_000_000) {
-      return `${(num / 1_000_000).toFixed(1)}M`
-    }
+    if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`
+    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`
     return num.toLocaleString('es-GT')
   }
 

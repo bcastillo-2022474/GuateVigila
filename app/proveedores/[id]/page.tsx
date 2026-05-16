@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { client } from '@/lib/sdk/client'
 import type { RiskLevel } from '@/lib/sdk/types'
@@ -11,6 +12,16 @@ import { SupplierContracts } from '@/components/guatevigila/supplier-contracts'
 interface PageProps {
   params: Promise<{ id: string }>
   searchParams: Promise<{ q?: string; page?: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+  const supplier = await client.getSupplierById(id)
+  if (!supplier) return {}
+  return {
+    title: supplier.name,
+    description: `Perfil de proveedor: ${supplier.name}. NIT ${supplier.nit}. ${supplier.totalContracts} contratos gubernamentales por GTQ ${(supplier.totalAwarded / 1_000_000).toFixed(0)}M.`,
+  }
 }
 
 function formatAmount(amount: number, currency: string) {

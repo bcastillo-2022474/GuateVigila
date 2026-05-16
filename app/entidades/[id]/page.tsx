@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { client } from '@/lib/sdk/client'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
@@ -8,6 +9,16 @@ import { EntityDetailTabs } from '@/components/guatevigila/entity-detail-tabs'
 interface PageProps {
   params: Promise<{ id: string }>
   searchParams: Promise<{ q?: string; page?: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+  const entity = await client.getEntityById(id)
+  if (!entity) return {}
+  return {
+    title: entity.name,
+    description: `Perfil de contrataciones públicas de ${entity.name}. ${entity.totalContracts.toLocaleString()} adjudicaciones por GTQ ${(entity.totalAmount / 1_000_000).toFixed(0)}M.`,
+  }
 }
 
 async function EntityContent({ id, q, pageNum }: { id: string; q: string; pageNum: number }) {

@@ -189,7 +189,7 @@ export async function getEntitySuppliers(
 
   const [totalRows, supplierRows] = await Promise.all([
     query<{ total: number }>(`
-      SELECT COUNT(DISTINCT s.id) AS total
+      SELECT COUNT(DISTINCT s.name) AS total
       FROM main m
       JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
       JOIN awards_suppliers s ON s.awards_id = a.id
@@ -198,14 +198,12 @@ export async function getEntitySuppliers(
     `),
 
     query<{
-      supplier_id: string
       supplier_name: string
       contract_count: number
       total_amount: number
       single_bidder_count: number
     }>(`
       SELECT
-        s.id                                                           AS supplier_id,
         s.name                                                         AS supplier_name,
         COUNT(DISTINCT a.id)                                           AS contract_count,
         SUM(a.value_amount)                                            AS total_amount,
@@ -216,7 +214,7 @@ export async function getEntitySuppliers(
       JOIN awards_suppliers s ON s.awards_id = a.id
       WHERE m.buyer_name = '${safeName}'
         ${searchClause}
-      GROUP BY s.id, s.name
+      GROUP BY s.name
       ORDER BY total_amount DESC
       LIMIT ${PAGE_SIZE} OFFSET ${offset}
     `),
@@ -228,8 +226,8 @@ export async function getEntitySuppliers(
     const amt = Number(r.total_amount)
     const singlePct = count > 0 ? Number(r.single_bidder_count) / count : 0
     return {
-      id: `${id}-${r.supplier_id}`,
-      supplierId: String(r.supplier_id),
+      id: `${id}-${r.supplier_name}`,
+      supplierId: r.supplier_name,
       supplierName: r.supplier_name,
       contractCount: count,
       totalAmount: amt,
