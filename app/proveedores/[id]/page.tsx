@@ -78,7 +78,7 @@ async function SupplierContent({ id, q, pageNum }: { id: string; q: string; page
             Descargar Informe PDF
           </button>
           <a
-            href="https://www.registromercantil.gob.gt"
+            href={`https://eregistros.registromercantil.gob.gt/index.jsp?nit=${supplier.nit.replace('K', '')}`}
             target="_blank"
             rel="noopener noreferrer"
             className="border border-outline-variant text-primary px-6 py-2 rounded-sm text-xs font-semibold hover:bg-surface-container-low transition-colors flex items-center gap-2"
