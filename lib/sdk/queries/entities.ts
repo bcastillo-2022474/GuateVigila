@@ -1,4 +1,4 @@
-import type { Entity, EntityFilters, EntityListItem, RiskLevel } from '../types'
+import type { Entity, EntityFilters, EntityListItem, EntitySuppliersFilters, PaginatedSuppliers, RiskLevel } from '../types'
 import { query } from '@/lib/db'
 
 function inferType(name: string): EntityListItem['type'] {
@@ -102,13 +102,11 @@ export async function getEntityById(id: string): Promise<Entity | null> {
   const buyerName = nameRows[0].buyer_name
   const safeName = buyerName.replace(/'/g, "''")
 
-  const [summaryRows, yearlyRows, supplierRows] = await Promise.all([
-    // Summary stats
+  const [summaryRows, yearlyRows] = await Promise.all([
     query<{
       total_awards: number
       total_amount: number
       direct_purchase_count: number
-      active_alerts: number
     }>(`
       SELECT
         COUNT(DISTINCT a.id)                                           AS total_awards,
@@ -116,14 +114,12 @@ export async function getEntityById(id: string): Promise<Entity | null> {
         COUNT(DISTINCT CASE
           WHEN m.tender_procurementMethodDetails ILIKE '%Art. 43%'
             OR m.tender_procurementMethodDetails ILIKE '%Art. 54%'
-          THEN a.id END)                                               AS direct_purchase_count,
-        0                                                              AS active_alerts
+          THEN a.id END)                                               AS direct_purchase_count
       FROM main m
       JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
       WHERE m.buyer_name = '${safeName}'
     `),
 
-    // Yearly breakdown
     query<{ year: number; amount: number }>(`
       SELECT
         year(m.tender_tenderPeriod_startDate)   AS year,
@@ -134,30 +130,6 @@ export async function getEntityById(id: string): Promise<Entity | null> {
         AND year(m.tender_tenderPeriod_startDate) > 2000
       GROUP BY 1
       ORDER BY 1
-    `),
-
-    // Top 20 suppliers
-    query<{
-      supplier_id: string
-      supplier_name: string
-      contract_count: number
-      total_amount: number
-      single_bidder_count: number
-    }>(`
-      SELECT
-        s.id                                                           AS supplier_id,
-        s.name                                                         AS supplier_name,
-        COUNT(DISTINCT a.id)                                           AS contract_count,
-        SUM(a.value_amount)                                            AS total_amount,
-        COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
-                            THEN a.id END)                             AS single_bidder_count
-      FROM main m
-      JOIN awards a    ON a.main_ocid = m.ocid AND a.status = 'active'
-      JOIN awards_suppliers s ON s.awards_id = a.id
-      WHERE m.buyer_name = '${safeName}'
-      GROUP BY s.id, s.name
-      ORDER BY total_amount DESC
-      LIMIT 20
     `),
   ])
 
@@ -180,7 +152,78 @@ export async function getEntityById(id: string): Promise<Entity | null> {
     }
   })
 
-  const topSuppliers = supplierRows.map((r) => {
+  return {
+    id,
+    name: buyerName,
+    shortName: shortName(buyerName),
+    totalContracts: totalAwards,
+    totalAmount,
+    currency: 'GTQ',
+    directPurchasePercentage: directPct,
+    activeAlerts: 0,
+    yearlyData,
+  }
+}
+
+const PAGE_SIZE = 15
+
+export async function getEntitySuppliers(
+  id: string,
+  filters: EntitySuppliersFilters = {}
+): Promise<PaginatedSuppliers> {
+  const safeId = id.replace(/'/g, "''")
+  const page = Math.max(1, filters.page ?? 1)
+  const offset = (page - 1) * PAGE_SIZE
+  const searchClause = filters.q?.trim()
+    ? `AND s.name ILIKE '%${filters.q.trim().replace(/'/g, "''")}%'`
+    : ''
+
+  // Resolve buyer_name from id
+  const nameRows = await query<{ buyer_name: string }>(`
+    SELECT DISTINCT buyer_name FROM main
+    WHERE buyer_id = '${safeId}' OR buyer_name = '${safeId}'
+    LIMIT 1
+  `)
+  if (nameRows.length === 0) return { suppliers: [], total: 0, page, pageSize: PAGE_SIZE, totalPages: 0 }
+  const safeName = nameRows[0].buyer_name.replace(/'/g, "''")
+
+  const [totalRows, supplierRows] = await Promise.all([
+    query<{ total: number }>(`
+      SELECT COUNT(DISTINCT s.id) AS total
+      FROM main m
+      JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
+      JOIN awards_suppliers s ON s.awards_id = a.id
+      WHERE m.buyer_name = '${safeName}'
+        ${searchClause}
+    `),
+
+    query<{
+      supplier_id: string
+      supplier_name: string
+      contract_count: number
+      total_amount: number
+      single_bidder_count: number
+    }>(`
+      SELECT
+        s.id                                                           AS supplier_id,
+        s.name                                                         AS supplier_name,
+        COUNT(DISTINCT a.id)                                           AS contract_count,
+        SUM(a.value_amount)                                            AS total_amount,
+        COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
+                            THEN a.id END)                             AS single_bidder_count
+      FROM main m
+      JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
+      JOIN awards_suppliers s ON s.awards_id = a.id
+      WHERE m.buyer_name = '${safeName}'
+        ${searchClause}
+      GROUP BY s.id, s.name
+      ORDER BY total_amount DESC
+      LIMIT ${PAGE_SIZE} OFFSET ${offset}
+    `),
+  ])
+
+  const total = Number(totalRows[0]?.total ?? 0)
+  const suppliers = supplierRows.map((r) => {
     const count = Number(r.contract_count)
     const amt = Number(r.total_amount)
     const singlePct = count > 0 ? Number(r.single_bidder_count) / count : 0
@@ -196,15 +239,10 @@ export async function getEntityById(id: string): Promise<Entity | null> {
   })
 
   return {
-    id,
-    name: buyerName,
-    shortName: shortName(buyerName),
-    totalContracts: totalAwards,
-    totalAmount,
-    currency: 'GTQ',
-    directPurchasePercentage: directPct,
-    activeAlerts: 0,
-    yearlyData,
-    topSuppliers,
+    suppliers,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(total / PAGE_SIZE),
   }
 }
