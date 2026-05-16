@@ -53,7 +53,7 @@ export async function getEntities(filters?: EntityFilters): Promise<EntityListIt
       m.buyer_name,
       COUNT(DISTINCT a.id)                                        AS total_awards,
       SUM(a.value_amount)                                         AS total_amount,
-      COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
+      COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
                           THEN a.id END)                          AS single_bidder_count
     FROM main m
     JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
@@ -112,8 +112,8 @@ export async function getEntityById(id: string): Promise<Entity | null> {
         COUNT(DISTINCT a.id)                                           AS total_awards,
         SUM(a.value_amount)                                            AS total_amount,
         COUNT(DISTINCT CASE
-          WHEN m.tender_procurementMethodDetails ILIKE '%Art. 43%'
-            OR m.tender_procurementMethodDetails ILIKE '%Art. 54%'
+          WHEN m."tender_procurementMethodDetails" ILIKE '%Art. 43%'
+            OR m."tender_procurementMethodDetails" ILIKE '%Art. 54%'
           THEN a.id END)                                               AS direct_purchase_count
       FROM main m
       JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
@@ -122,12 +122,12 @@ export async function getEntityById(id: string): Promise<Entity | null> {
 
     query<{ year: number; amount: number }>(`
       SELECT
-        year(m.tender_tenderPeriod_startDate)   AS year,
-        SUM(a.value_amount)                     AS amount
+        EXTRACT(year FROM m."tender_tenderPeriod_startDate")   AS year,
+        SUM(a.value_amount)                                    AS amount
       FROM main m
       JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
       WHERE m.buyer_name = '${safeName}'
-        AND year(m.tender_tenderPeriod_startDate) > 2000
+        AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
       GROUP BY 1
       ORDER BY 1
     `),
@@ -209,7 +209,7 @@ export async function getEntitySuppliers(
         s.name                                                         AS supplier_name,
         COUNT(DISTINCT a.id)                                           AS contract_count,
         SUM(a.value_amount)                                            AS total_amount,
-        COUNT(DISTINCT CASE WHEN m.tender_numberOfTenderers = 1
+        COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
                             THEN a.id END)                             AS single_bidder_count
       FROM main m
       JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
