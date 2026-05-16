@@ -78,17 +78,16 @@ export function DraftSection({
         <button
           onClick={generateDraft}
           disabled={loading}
-          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition duration-200 hover:bg-primary/90 disabled:opacity-50"
+          className="bg-primary text-primary-foreground px-6 py-2 text-xs font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {loading
-            ? 'Generando...'
-            : 'Generar borrador periodístico'}
+          <span className="material-symbols-outlined filled text-lg">auto_awesome</span>
+          {loading ? 'Generando...' : 'Generar borrador periodístico'}
         </button>
 
         <button
           onClick={copyDraft}
           disabled={!draft}
-          className="px-4 py-2 rounded-lg border border-border text-sm font-medium transition duration-200 hover:bg-muted hover:text-muted-foreground disabled:opacity-50"
+          className="border border-outline-variant px-6 py-2 text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors disabled:opacity-40"
         >
           Copiar al portapapeles
         </button>
@@ -96,10 +95,8 @@ export function DraftSection({
 
       <textarea
         value={draft}
-        onChange={(e) =>
-          setDraft(e.target.value)
-        }
-        className="w-full min-h-[260px] rounded-xl border border-border bg-background p-4 text-sm"
+        onChange={(e) => setDraft(e.target.value)}
+        className="w-full min-h-[260px] border border-outline-variant bg-surface-container-lowest p-4 text-sm text-on-surface leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
     </div>
   )

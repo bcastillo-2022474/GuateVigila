@@ -14,15 +14,7 @@ import {
 } from 'next/navigation'
 import { useDebouncedCallback } from 'use-debounce'
 import type { Alert } from '@/lib/sdk/types'
-import { AlertCard } from '@/components/guatevigila/alert-card'
-
-const SIGNAL_LABELS: Record<string, string> = {
-  single_bidder: 'Proveedor único recurrente',
-  short_deadline: 'Plazo imposible',
-  direct_purchase: 'Abuso compra directa',
-  award_gap: 'Sin contrato formal',
-  failed_tenders: 'Alta tasa de desiertos',
-}
+import { AlertCard, SIGNAL_LABELS } from '@/components/guatevigila/alert-card'
 
 const ITEMS_PER_PAGE = 20
 
@@ -143,8 +135,7 @@ export function AlertList({
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
           <input
             type="text"
             value={inputEntity}
@@ -153,35 +144,19 @@ export function AlertList({
               debouncedSearch(e.target.value)
             }}
             placeholder="Buscar entidad..."
-            className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
         {/* Signal */}
         <select
           value={signal}
-          onChange={(e) => {
-            pushParams({
-              signal:
-                e.target.value || null,
-              page: null,
-            })
-          }}
-          className="px-4 py-2 bg-card border border-border rounded-lg text-sm"
+          onChange={(e) => pushParams({ signal: e.target.value || null, page: null })}
+          className="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-sm text-on-surface"
         >
-          <option value="">
-            Todas las señales
-          </option>
-
-          {Object.entries(
-            SIGNAL_LABELS
-          ).map(([value, label]) => (
-            <option
-              key={value}
-              value={value}
-            >
-              {label}
-            </option>
+          <option value="">Todas las señales</option>
+          {Object.entries(SIGNAL_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
           ))}
         </select>
 
@@ -189,22 +164,16 @@ export function AlertList({
         <input
           type="text"
           value={year}
-          onChange={(e) => {
-            pushParams({
-              year:
-                e.target.value || null,
-              page: null,
-            })
-          }}
+          onChange={(e) => pushParams({ year: e.target.value || null, page: null })}
           placeholder="Año"
-          className="px-4 py-2 bg-card border border-border rounded-lg text-sm w-[120px]"
+          className="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-sm text-on-surface w-[120px]"
         />
       </div>
 
       {/* Results */}
       <div className="space-y-4">
         {paginatedAlerts.length === 0 ? (
-          <div className="bg-card border border-border rounded-lg p-10 text-center text-sm text-muted-foreground">
+          <div className="bg-surface-container-lowest border border-outline-variant p-10 text-center text-sm text-on-surface-variant">
             No se encontraron alertas.
           </div>
         ) : (
@@ -221,26 +190,22 @@ export function AlertList({
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
           <button
-            onClick={() =>
-              goToPage(page - 1)
-            }
+            onClick={() => goToPage(page - 1)}
             disabled={page <= 1}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 border border-outline-variant bg-surface-container-lowest text-sm text-on-surface disabled:opacity-40 hover:bg-surface-container-low transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
             Anterior
           </button>
 
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-on-surface-variant">
             Página {page} de {totalPages}
           </div>
 
           <button
-            onClick={() =>
-              goToPage(page + 1)
-            }
+            onClick={() => goToPage(page + 1)}
             disabled={page >= totalPages}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 border border-outline-variant bg-surface-container-lowest text-sm text-on-surface disabled:opacity-40 hover:bg-surface-container-low transition-colors"
           >
             Siguiente
             <ChevronRight className="w-4 h-4" />

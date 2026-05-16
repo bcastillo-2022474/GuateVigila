@@ -6,6 +6,7 @@ import { client } from '@/lib/sdk/client'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { DraftSection } from '@/components/guatevigila/draft-section'
+import { getRiskLabel } from '@/components/guatevigila/alert-card'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -38,7 +39,7 @@ async function AlertContent({ id }: { id: string }) {
       <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-20">
         <div className="max-w-2xl">
           <span className="text-xs font-semibold tracking-widest uppercase text-destructive mb-1 block">
-            Alerta de Riesgo Crítico
+            Alerta de Riesgo {getRiskLabel(alert.riskLevel)}
           </span>
           <h1 className="text-3xl font-bold text-on-surface mb-2">{alert.entityName}</h1>
           <p className="text-on-surface-variant text-base max-w-xl">{alert.description}</p>
@@ -59,7 +60,7 @@ async function AlertContent({ id }: { id: string }) {
           </div>
           <div>
             <span className="text-xs font-semibold block text-on-surface-variant">Score de Riesgo</span>
-            <span className="text-xl font-semibold text-destructive">Crítico</span>
+            <span className="text-xl font-semibold text-destructive">{getRiskLabel(alert.riskLevel)}</span>
           </div>
         </div>
       </section>
