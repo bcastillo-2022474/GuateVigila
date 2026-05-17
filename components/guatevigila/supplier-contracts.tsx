@@ -88,16 +88,16 @@ export function SupplierContracts({ result, initialQ }: SupplierContractsProps) 
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface-container-low border-b border-outline-variant">
-                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Entidad</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Contratos</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Monto Total</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Riesgo</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface">Entidad</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface">Contratos</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface">Monto Total</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface">Riesgo</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant">
               {contracts.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-sm text-on-surface-variant">
+                  <td colSpan={4} className="px-6 py-10 text-center text-sm text-on-surface">
                     No se encontraron entidades con ese nombre.
                   </td>
                 </tr>
@@ -120,7 +120,7 @@ export function SupplierContracts({ result, initialQ }: SupplierContractsProps) 
         </div>
 
         <div className="flex flex-col items-center gap-3 px-4 py-4 border-t border-outline-variant">
-          <p className="text-xs text-on-surface-variant">
+          <p className="text-xs text-on-surface">
             {total === 0
               ? 'Sin resultados'
               : `Mostrando ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} de ${total} entidades`}

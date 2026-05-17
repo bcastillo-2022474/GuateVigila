@@ -104,7 +104,7 @@ export function AlertList({ result, signal, year, entity }: AlertListProps) {
             value={inputEntity}
             onChange={(e) => handleEntity(e.target.value)}
             placeholder="Buscar por entidad..."
-            className="w-full pl-10 pr-10 py-2 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full pl-10 pr-10 py-2 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
           />
           {inputEntity && (
             <button

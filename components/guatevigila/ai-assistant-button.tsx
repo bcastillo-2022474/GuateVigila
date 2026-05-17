@@ -2,11 +2,15 @@
 
 export function AIAssistantButton() {
   return (
-    <div className="fixed bottom-0 right-0 z-50 p-6 pointer-events-none">
+    <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
       <div className="max-w-[1200px] mx-auto w-full flex justify-end">
-        <button className="pointer-events-auto bg-surface border border-outline-variant rounded-full w-72 flex items-center gap-2 px-4 py-2 text-on-surface-variant hover:border-on-surface transition-all focus-within:border-primary">
-          <span className="material-symbols-outlined text-primary">smart_toy</span>
-          <span className="text-xs font-semibold tracking-wide">Preguntar a IA...</span>
+        <button
+          type="button"
+          aria-label="Preguntar a IA"
+          className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition duration-200 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+        >
+          <span className="material-symbols-outlined text-primary-foreground">smart_toy</span>
+          <span className="text-sm">Preguntar a IA</span>
         </button>
       </div>
     </div>

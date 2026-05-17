@@ -57,7 +57,7 @@ export function OmnisearchInput() {
 
   return (
     <div ref={containerRef} className="w-full max-w-xl relative">
-      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg pointer-events-none" aria-hidden="true">
+      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary-foreground text-lg pointer-events-none" aria-hidden="true">
         search
       </span>
       <input
@@ -68,7 +68,7 @@ export function OmnisearchInput() {
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         placeholder="Buscar entidades, proveedores o alertas..."
-        className="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant focus:outline-none focus:border-primary text-sm rounded-sm"
+        className="w-full pl-10 pr-4 py-2 bg-primary/10 backdrop-blur-sm border border-outline-variant focus:outline-none focus:border-primary text-primary-foreground placeholder:text-primary-foreground/70 text-sm rounded-sm"
         autoComplete="off"
         role="combobox"
         aria-expanded={isOpen}
@@ -78,32 +78,31 @@ export function OmnisearchInput() {
       />
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-outline-variant shadow-lg z-50 rounded-sm overflow-hidden">
-          {loading ? (
-            <p role="status" className="px-4 py-3 text-sm text-on-surface-variant">Buscando...</p>
-          ) : results.length === 0 ? (
-            <p role="status" className="px-4 py-3 text-sm text-on-surface-variant">Sin resultados</p>
-          ) : (
-            <div
-              ref={listboxRef}
-              id={listboxId}
-              role="listbox"
-              aria-label="Resultados de búsqueda"
-              className="overflow-y-auto max-h-[220px] overscroll-contain"
-            >
-              {results.map((result, i) => (
-                <SearchResultRow
-                  key={result.id}
-                  id={`${listboxId}-option-${i}`}
-                  result={result}
-                  isActive={i === keyboardIndex}
-                  onSelect={() => navigate(result.href)}
-                  onMouseEnter={() => setKeyboardIndex(i)}
-                  className={i > 0 ? 'border-t border-outline-variant' : ''}
-                />
-              ))}
-            </div>
-          )}
+<div className="absolute top-full left-0 right-0 mt-1 bg-zinc-100 border border-zinc-300 shadow-lg z-50 rounded-sm overflow-hidden">        {loading ? (
+          <p role="status" className="px-4 py-3 text-sm text-on-surface-variant">Buscando...</p>
+        ) : results.length === 0 ? (
+          <p role="status" className="px-4 py-3 text-sm text-on-surface-variant">Sin resultados</p>
+        ) : (
+          <div
+            ref={listboxRef}
+            id={listboxId}
+            role="listbox"
+            aria-label="Resultados de búsqueda"
+            className="overflow-y-auto max-h-[220px] overscroll-contain"
+          >
+            {results.map((result, i) => (
+              <SearchResultRow
+                key={result.id}
+                id={`${listboxId}-option-${i}`}
+                result={result}
+                isActive={i === keyboardIndex}
+                onSelect={() => navigate(result.href)}
+                onMouseEnter={() => setKeyboardIndex(i)}
+                className={i > 0 ? 'border-t border-outline-variant' : ''}
+              />
+            ))}
+          </div>
+        )}
         </div>
       )}
     </div>
