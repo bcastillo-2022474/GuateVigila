@@ -24,7 +24,7 @@ export async function getSuppliers(filters: SupplierFilters = {}): Promise<Pagin
 
   const [totalRows, rows] = await Promise.all([
     query<{ total: number }>(`
-      SELECT COUNT(DISTINCT s.name) AS total
+      SELECT COUNT(DISTINCT s.id) AS total
       FROM awards_suppliers s
       JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
       JOIN main m   ON m.ocid = a.main_ocid
@@ -40,25 +40,22 @@ export async function getSuppliers(filters: SupplierFilters = {}): Promise<Pagin
       client_entities: number
       single_bidder_count: number
     }>(`
-      SELECT DISTINCT ON (ocds_id) *
-      FROM (
-        SELECT
-          MAX(s.id)                                                     AS ocds_id,
-          s.name                                                        AS supplier_name,
-          COUNT(DISTINCT a.id)                                          AS total_contracts,
-          SUM(a.value_amount)                                           AS total_amount,
-          COUNT(DISTINCT m.buyer_id)                                    AS client_entities,
-          COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
-                              THEN a.id END)                            AS single_bidder_count
-        FROM awards_suppliers s
-        JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
-        JOIN main m   ON m.ocid = a.main_ocid
-        WHERE EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
-          ${searchClause}
-        GROUP BY s.name
-        ORDER BY total_amount DESC
-        LIMIT ${PAGE_SIZE_LIST} OFFSET ${offset}
-      ) sub
+      SELECT
+        s.id                                                          AS ocds_id,
+        MAX(s.name)                                                   AS supplier_name,
+        COUNT(DISTINCT a.id)                                          AS total_contracts,
+        SUM(a.value_amount)                                           AS total_amount,
+        COUNT(DISTINCT m.buyer_id)                                    AS client_entities,
+        COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
+                            THEN a.id END)                            AS single_bidder_count
+      FROM awards_suppliers s
+      JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
+      JOIN main m   ON m.ocid = a.main_ocid
+      WHERE EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
+        ${searchClause}
+      GROUP BY s.id
+      ORDER BY total_amount DESC
+      LIMIT ${PAGE_SIZE_LIST} OFFSET ${offset}
     `),
   ])
 
@@ -97,8 +94,8 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
       single_bidder_count: number
     }>(`
       SELECT
-        MAX(s.id)                                                     AS ocds_id,
-        s.name                                                        AS supplier_name,
+        s.id                                                          AS ocds_id,
+        MAX(s.name)                                                   AS supplier_name,
         COUNT(DISTINCT a.id)                                          AS total_awards,
         SUM(a.value_amount)                                           AS total_amount,
         COUNT(DISTINCT m.buyer_id)                                    AS client_entities,
@@ -109,7 +106,7 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
       JOIN main m   ON m.ocid = a.main_ocid
       WHERE s.id = '${safeId}'
         AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
-      GROUP BY s.name
+      GROUP BY s.id
     `),
 
     query<{ year: number; contract_count: number; amount: number }>(`

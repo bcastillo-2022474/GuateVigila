@@ -75,20 +75,15 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
             NIT: {supplier.nit}
           </p>
         </div>
-        <div className="flex gap-4">
-          <button className="bg-primary text-primary-foreground px-6 py-2 rounded-sm text-xs font-semibold hover:opacity-90 transition-opacity">
-            Descargar Informe PDF
-          </button>
-          <a
-            href={`https://eregistros.registromercantil.gob.gt/index.jsp?nit=${supplier.nit.replace('K', '')}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="border border-outline-variant text-primary px-6 py-2 rounded-sm text-xs font-semibold hover:bg-surface-container-low transition-colors flex items-center gap-2"
-          >
-            Registro Mercantil
-            <span className="material-symbols-outlined text-lg">open_in_new</span>
-          </a>
-        </div>
+        <a
+          href={`https://eregistros.registromercantil.gob.gt/index.jsp?nit=${supplier.nit.replace('K', '')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="border border-outline-variant text-primary px-6 py-2 rounded-sm text-xs font-semibold hover:bg-surface-container-low transition-colors flex items-center gap-2"
+        >
+          Registro Mercantil
+          <span className="material-symbols-outlined text-lg">open_in_new</span>
+        </a>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-20">
@@ -124,12 +119,6 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
                   </div>
                 </div>
               ))}
-            </div>
-            <div className="mt-8 pt-6 border-t border-outline-variant flex justify-end">
-              <button className="text-primary text-xs font-semibold flex items-center gap-1 hover:underline">
-                Ver desglose detallado
-                <span className="material-symbols-outlined text-base">chevron_right</span>
-              </button>
             </div>
           </div>
         </div>

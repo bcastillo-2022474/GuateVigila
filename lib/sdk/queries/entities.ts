@@ -227,7 +227,7 @@ export async function getEntitySuppliers(
 
   const [totalRows, supplierRows] = await Promise.all([
     query<{ total: number }>(`
-      SELECT COUNT(DISTINCT s.name) AS total
+      SELECT COUNT(DISTINCT s.id) AS total
       FROM main m
       JOIN awards a           ON a.main_ocid = m.ocid AND a.status = 'active'
       JOIN awards_suppliers s ON s.awards_id = a.id
@@ -244,9 +244,9 @@ export async function getEntitySuppliers(
       single_bidder_count: number
     }>(`
       SELECT
-        MAX(s.id)                                                      AS ocds_id,
-        s.name                                                         AS supplier_name,
-        REPLACE(MAX(s.id), 'GT-NIT-', '')                             AS supplier_nit,
+        s.id                                                           AS ocds_id,
+        MAX(s.name)                                                    AS supplier_name,
+        REPLACE(s.id, 'GT-NIT-', '')                                  AS supplier_nit,
         COUNT(DISTINCT a.id)                                           AS contract_count,
         SUM(a.value_amount)                                            AS total_amount,
         COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
@@ -256,7 +256,7 @@ export async function getEntitySuppliers(
       JOIN awards_suppliers s ON s.awards_id = a.id
       WHERE m.buyer_name = '${safeName}'
         ${searchClause}
-      GROUP BY s.name
+      GROUP BY s.id
       ORDER BY total_amount DESC
       LIMIT ${PAGE_SIZE} OFFSET ${offset}
     `),
