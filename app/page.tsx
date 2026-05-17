@@ -7,11 +7,13 @@ import { client } from '@/lib/sdk/client'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { StatsBar } from '@/components/guatevigila/stats-bar'
-import { AlertList } from '@/components/guatevigila/alert-list'
+import { AlertListClient } from '@/components/guatevigila/alert-list-client'
 
 interface PageProps {
   searchParams: Promise<{ signal?: string; year?: string; entity?: string; page?: string }>
 }
+
+export const dynamic = 'force-dynamic'
 
 
 export const metadata: Metadata = {
@@ -37,7 +39,6 @@ const jsonLd = {
 
 async function StatsBarLoader() {
   const stats = await client.getGlobalStats()
-
   return <StatsBar stats={stats} />
 }
 
@@ -50,7 +51,7 @@ async function AlertListLoader({
     entity: entity || undefined,
     page,
   })
-  return <AlertList result={result} signal={signal} year={year} entity={entity} />
+  return <AlertListClient initialResult={result} signal={signal} year={year} entity={entity} />
 }
 
 function StatsBarSkeleton() {
@@ -79,6 +80,7 @@ function AlertListSkeleton() {
 export default async function AlertQueuePage({ searchParams }: PageProps) {
   const { signal = '', year = '', entity = '', page: pageParam = '1' } = await searchParams
   const page = Math.max(1, parseInt(pageParam, 10) || 1)
+
   return (
     <div className="min-h-screen bg-background">
       <script
