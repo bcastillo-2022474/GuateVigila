@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import { SITE, META, SOCIAL } from '@/lib/constants/site'
+import { AIResultsProvider } from '@/components/guatevigila/ai-context'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -54,7 +55,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased min-h-screen">
-        {children}
+        <AIResultsProvider>{children}</AIResultsProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
