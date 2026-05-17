@@ -27,7 +27,8 @@ async function getAdapter(): Promise<QueryFn> {
   return _query
 }
 
-async function rawQuery<T = Record<string, unknown>>(sql: string): Promise<T[]> {
+// Direct query — no cache. Use only where caching is inappropriate (e.g. sitemap generation).
+export async function rawQuery<T = Record<string, unknown>>(sql: string): Promise<T[]> {
   const fn = await getAdapter()
   return fn<T>(sql)
 }
