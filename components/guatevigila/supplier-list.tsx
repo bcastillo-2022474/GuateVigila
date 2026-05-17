@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useDebouncedCallback } from 'use-debounce'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -57,9 +57,14 @@ export function SupplierList({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   const [q, setQ] = useState(initialQ)
+
+  useEffect(() => {
+    if (!isPending) searchInputRef.current?.focus()
+  }, [isPending])
 
   const pushParams = useCallback(
     (overrides: Record<string, string | null>) => {
@@ -107,6 +112,7 @@ export function SupplierList({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
+            ref={searchInputRef}
             type="text"
             value={q}
             onChange={(e) => handleQ(e.target.value)}
