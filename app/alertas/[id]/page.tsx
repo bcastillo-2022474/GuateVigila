@@ -85,9 +85,23 @@ async function AlertContent({ id }: { id: string }) {
   if (!alert) notFound()
 
   const riskVisuals = getRiskVisuals(alert.riskLevel)
+  const url = `${SITE.url}/alertas/${encodeURIComponent(id)}`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Report',
+    name: `Alerta de riesgo: ${alert.entityName}`,
+    description: alert.description,
+    url,
+    about: {
+      '@type': 'GovernmentOrganization',
+      name: alert.entityName,
+    },
+  }
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-20">
         <div className="max-w-2xl">
           <span

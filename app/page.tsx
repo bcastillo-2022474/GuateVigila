@@ -13,7 +13,7 @@ interface PageProps {
   searchParams: Promise<{ signal?: string; year?: string; entity?: string; page?: string }>
 }
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: META.pages.alertas.title,

@@ -92,8 +92,18 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
 
   const maxAmount = Math.max(...supplier.yearlyData.map((d) => d.amount))
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: supplier.name,
+    taxID: supplier.nit,
+    url: `${SITE.url}/proveedores/${encodeURIComponent(id)}`,
+    description: `Proveedor del Estado guatemalteco con ${supplier.totalContracts} contratos en ${supplier.clientEntities} entidades.`,
+  }
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-20">
         <div>
           <h1 className="text-3xl font-bold mb-1">{supplier.name}</h1>

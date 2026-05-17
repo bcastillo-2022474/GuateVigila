@@ -9,7 +9,7 @@ import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { EntityList } from '@/components/guatevigila/entity-list'
 import { Building2, FileText, AlertTriangle } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: META.pages.entidades.title,

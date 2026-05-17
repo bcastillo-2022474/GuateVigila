@@ -50,8 +50,17 @@ async function EntityContent({ id, q, pageNum }: { id: string; q: string; pageNu
 
   if (!entity) notFound()
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'GovernmentOrganization',
+    name: entity.name,
+    url: `${SITE.url}/entidades/${encodeURIComponent(id)}`,
+    description: `Entidad gubernamental guatemalteca con ${entity.totalContracts.toLocaleString()} adjudicaciones analizadas.`,
+  }
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <section className="mb-12">
         <div className="flex flex-col gap-1">
           <span className="text-xs font-semibold tracking-widest uppercase text-on-surface-variant">
