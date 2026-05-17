@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { client } from '@/lib/sdk/client'
 import type { RiskLevel } from '@/lib/sdk/types'
+import { SITE, SOCIAL } from '@/lib/constants/site'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { DraftSection } from '@/components/guatevigila/draft-section'
@@ -16,9 +17,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { id } = await params
   const alert = await client.getAlertById(id)
   if (!alert) return {}
+
+  const title = `Alerta: ${alert.entityName}`
+  const description = alert.description
+  const url = `${SITE.url}/alertas/${id}`
+
   return {
-    title: `Alerta: ${alert.entityName}`,
-    description: alert.description,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'article',
+      url,
+      title,
+      description,
+      siteName: SITE.name,
+      locale: 'es_GT',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: SOCIAL.twitterHandle,
+      title,
+      description,
+    },
   }
 }
 
@@ -202,20 +223,6 @@ async function AlertContent({ id }: { id: string }) {
             </div>
           </section>
 
-          {alert.networkMapUrl && (
-            <div className="aspect-square bg-surface border border-outline-variant overflow-hidden flex items-center justify-center relative">
-              <img
-                src={alert.networkMapUrl}
-                alt="Red de conexiones"
-                className="w-full h-full object-cover opacity-80 grayscale contrast-125"
-              />
-              <div className="absolute inset-0 flex items-end p-4 bg-gradient-to-t from-surface to-transparent">
-                <span className="text-[11px] text-on-surface-variant">
-                  Mapa de Red de Influencia (Beta)
-                </span>
-              </div>
-            </div>
-          )}
         </aside>
       </div>
     </>

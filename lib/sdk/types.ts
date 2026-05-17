@@ -46,7 +46,6 @@ export interface AlertDetail {
   // External links are only exposed when they can be derived reliably.
   guatecomprasUrl?: string
   registroMercantilUrl?: string
-  networkMapUrl?: string
 }
 
 export interface Signal {

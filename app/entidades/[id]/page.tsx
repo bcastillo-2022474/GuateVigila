@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { client } from '@/lib/sdk/client'
+import { SITE, SOCIAL } from '@/lib/constants/site'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { EntityDetailTabs } from '@/components/guatevigila/entity-detail-tabs'
@@ -15,9 +16,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { id } = await params
   const entity = await client.getEntityById(id)
   if (!entity) return {}
+
+  const title = entity.name
+  const description = `Perfil de contrataciones públicas de ${entity.name}. ${entity.totalContracts.toLocaleString()} adjudicaciones por GTQ ${(entity.totalAmount / 1_000_000).toFixed(0)}M.${entity.activeAlerts > 0 ? ` ${entity.activeAlerts} alerta${entity.activeAlerts !== 1 ? 's' : ''} activa${entity.activeAlerts !== 1 ? 's' : ''}.` : ''}`
+  const url = `${SITE.url}/entidades/${encodeURIComponent(id)}`
+
   return {
-    title: entity.name,
-    description: `Perfil de contrataciones públicas de ${entity.name}. ${entity.totalContracts.toLocaleString()} adjudicaciones por GTQ ${(entity.totalAmount / 1_000_000).toFixed(0)}M.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'article',
+      url,
+      title,
+      description,
+      siteName: SITE.name,
+      locale: 'es_GT',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: SOCIAL.twitterHandle,
+      title,
+      description,
+    },
   }
 }
 

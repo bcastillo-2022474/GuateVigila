@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { client } from '@/lib/sdk/client'
 import type { PaginatedAssociates, RiskLevel } from '@/lib/sdk/types'
+import { SITE, SOCIAL } from '@/lib/constants/site'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { MetricCard } from '@/components/guatevigila/metric-card'
@@ -19,9 +20,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { id } = await params
   const supplier = await client.getSupplierById(id)
   if (!supplier) return {}
+
+  const title = supplier.name
+  const description = `Proveedor del Estado: ${supplier.name}. NIT ${supplier.nit}. ${supplier.totalContracts} contratos gubernamentales por GTQ ${(supplier.totalAwarded / 1_000_000).toFixed(0)}M en ${supplier.clientEntities} entidades.${supplier.alerts.length > 0 ? ` ${supplier.alerts.length} alerta${supplier.alerts.length !== 1 ? 's' : ''} activa${supplier.alerts.length !== 1 ? 's' : ''}.` : ''}`
+  const url = `${SITE.url}/proveedores/${encodeURIComponent(id)}`
+
   return {
-    title: supplier.name,
-    description: `Perfil de proveedor: ${supplier.name}. NIT ${supplier.nit}. ${supplier.totalContracts} contratos gubernamentales por GTQ ${(supplier.totalAwarded / 1_000_000).toFixed(0)}M.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'article',
+      url,
+      title,
+      description,
+      siteName: SITE.name,
+      locale: 'es_GT',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: SOCIAL.twitterHandle,
+      title,
+      description,
+    },
   }
 }
 

@@ -115,7 +115,6 @@ export const mockAlertDetails: Record<string, AlertDetail> = {
     },
     draftInvestigation: `La auditoría de datos en GuateVigila ha detectado una anomalía crítica en el Instituto Guatemalteco de Seguridad Social (IGSS). Durante el último trimestre, el 85% de las adjudicaciones para equipo quirúrgico han sido asignadas a un único proveedor, superando por un margen del 62% el promedio de concentración de mercado del sector salud. Los documentos analizados revelan ventanas de licitación inusualmente cortas, de apenas 72 horas, lo que sugiere un posible direccionamiento de las bases. Esta práctica coincide con un incremento del 24% en los costos unitarios comparados con el mercado regional, representando un potencial perjuicio económico de millones de quetzales para la seguridad social guatemalteca.`,
     registroMercantilUrl: 'https://eregistros.registromercantil.gob.gt/index.jsp?nit=83921045',
-    networkMapUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBQnO3mDXmtk2fnkxJBRYiQ58hXEEvkzg1jW7D9nVAoSI0EK4fBdcb18nFsHlHV2e3M1bt4_QejyeuxwskqkNqAzrj8gZ_CnZqS7xKIgQWPcwEXwJURGkU1U3mWX75gfnAOeA05ElzVjhXRORk2i4XAzB9yqQZGzOcHgMQootURUkzvJTfYyucxyRzWg7Ymzmmkg0QkD17Zw_88UwLry-FgcaS_dz8MAbce3aV0Xspi-HyRh5Aj4vWPN2GAPS2eyM6bfqy-gXCUUXY',
   },
 }
 
