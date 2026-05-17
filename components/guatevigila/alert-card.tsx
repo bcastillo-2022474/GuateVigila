@@ -47,10 +47,10 @@ export function AlertCard({ alert }: AlertCardProps) {
   return (
     <Link href={`/alertas/${alert.id}`}>
       <div className="bg-surface-container-lowest border border-outline-variant p-6 flex flex-col md:flex-row md:items-start justify-between gap-4 hover:bg-surface-container-low transition-colors cursor-pointer">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-4">
-            <h3 className="text-xl font-semibold text-on-surface">{alert.entityName}</h3>
-            <span className={`px-2 py-0.5 border text-xs font-semibold tracking-tight uppercase rounded-sm ${getRiskBadgeClasses(alert.riskLevel)}`}>
+        <div className="space-y-2 min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="text-xl font-semibold text-on-surface truncate">{alert.entityName}</h3>
+            <span className={`shrink-0 px-2 py-0.5 border text-xs font-semibold tracking-tight uppercase rounded-sm ${getRiskBadgeClasses(alert.riskLevel)}`}>
               {getRiskLabel(alert.riskLevel)}
             </span>
           </div>
