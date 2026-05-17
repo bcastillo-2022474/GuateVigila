@@ -107,7 +107,7 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-20">
         <div>
           <h1 className="text-3xl font-bold mb-1">{supplier.name}</h1>
-          <p className="text-base text-on-surface-variant">
+          <p className="text-base text-on-surface">
             NIT: {supplier.nit}
           </p>
         </div>
@@ -141,10 +141,10 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">Historial por año</h2>
               <div className="flex gap-4">
-                <span className="flex items-center gap-1 text-[11px] text-on-surface-variant">
+                <span className="flex items-center gap-1 text-[11px] text-on-surface">
                   <span className="w-3 h-3 bg-secondary rounded-sm" /> Monto
                 </span>
-                <span className="flex items-center gap-1 text-[11px] text-on-surface-variant">
+                <span className="flex items-center gap-1 text-[11px] text-on-surface">
                   <span className="w-3 h-3 bg-secondary-container rounded-sm" /> Contratos
                 </span>
               </div>
@@ -152,12 +152,12 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
             <div className="space-y-6">
               {supplier.yearlyData.map((data) => (
                 <div key={data.year} className="space-y-1">
-                  <div className="flex justify-between text-xs font-semibold text-on-surface-variant">
+                  <div className="flex justify-between text-xs font-semibold text-on-surface">
                     <span>{data.year}</span>
                     <span>{supplier.currency} {(data.amount / 1_000_000).toFixed(1)}M ({data.contractCount} contratos)</span>
                   </div>
-                  <div className="w-full bg-surface-container-low h-8 rounded-sm overflow-hidden flex">
-                    <div className="bg-secondary h-full" style={{ width: `${(data.amount / maxAmount) * 100}%` }} />
+                  <div className="w-full bg-surface-container h-8 rounded-sm overflow-hidden flex">
+                    <div className="bg-primary h-full shadow-sm" style={{ width: `${(data.amount / maxAmount) * 100}%` }} />
                   </div>
                 </div>
               ))}
@@ -167,7 +167,7 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
 
         <div className="lg:col-span-1 space-y-6">
           <h2 className="text-xl font-semibold flex items-center gap-2">
-            <span className="material-symbols-outlined text-on-tertiary-fixed-variant">warning</span>
+            <span className="material-symbols-outlined text-on-surface">warning</span>
             Alertas Activas
           </h2>
           {supplier.alerts.map((alert) => (
@@ -176,10 +176,10 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
                 <span className={`px-2 py-0.5 text-[11px] font-semibold rounded uppercase ${alertBadgeClasses(alert.severity)}`}>
                   {alertLabel(alert.severity)}
                 </span>
-                <span className="text-[11px] text-on-surface-variant">{alert.date}</span>
+                <span className="text-[11px] text-on-surface">{alert.date}</span>
               </div>
               <p className="text-base font-semibold mb-1">{alert.title}</p>
-              <p className="text-sm text-on-surface-variant">{alert.description}</p>
+              <p className="text-sm text-on-surface">{alert.description}</p>
             </div>
           ))}
         </div>

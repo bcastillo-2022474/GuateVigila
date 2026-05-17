@@ -54,27 +54,27 @@ export function SupplierAssociates({ result }: SupplierAssociatesProps) {
     <div className="mt-20">
       <h2 className="text-xl font-semibold mb-6">Competidores Frecuentes</h2>
       <div className="bg-surface-container-lowest border border-outline-variant overflow-hidden">
-        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-surface-container-low border-b border-outline-variant text-xs font-semibold text-on-surface-variant uppercase tracking-widest">
+        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-surface-container-low border-b border-outline-variant text-xs font-semibold text-on-surface uppercase tracking-widest">
           <div className="col-span-9">Proveedor</div>
           <div className="col-span-3 text-right">Licitaciones en común</div>
         </div>
 
         <div className="divide-y divide-outline-variant">
           {associates.length === 0 ? (
-            <div className="px-6 py-10 text-center text-sm text-on-surface-variant">
+            <div className="px-6 py-10 text-center text-sm text-on-surface">
               Este proveedor no comparte licitaciones con otros competidores en el período analizado.
             </div>
           ) : associates.map((a) => (
             <div key={a.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-6 py-4 items-center">
               <div className="col-span-1 md:col-span-9 text-sm font-medium text-on-surface">{a.name}</div>
-              <div className="col-span-1 md:col-span-3 text-sm md:text-right text-on-surface-variant">{a.sharedTenders}</div>
+              <div className="col-span-1 md:col-span-3 text-sm md:text-right text-on-surface">{a.sharedTenders}</div>
             </div>
           ))
           }
         </div>
 
         {total > 0 && <div className="flex flex-col items-center gap-3 px-4 py-4 border-t border-outline-variant">
-          <p className="text-xs text-on-surface-variant">
+          <p className="text-xs text-on-surface">
             {total > pageSize
               ? `Mostrando ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} de ${total.toLocaleString('es-GT')} competidores`
               : `${total.toLocaleString('es-GT')} competidor${total !== 1 ? 'es' : ''}`}

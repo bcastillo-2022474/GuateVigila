@@ -36,7 +36,7 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
 
   return (
     <>
-      <header className="bg-primary border-b border-outline-variant sticky top-0 z-40 h-16 w-full">
+      <header className="bg-primary border-b border-primary/30 sticky top-0 z-40 h-16 w-full">
         <div className="flex items-center justify-between px-4 md:px-16 w-full max-w-[1200px] mx-auto h-full">
 
           <div className="flex items-center gap-3 md:gap-4">
@@ -102,10 +102,10 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
         <div className="fixed inset-0 z-50 bg-black/40 md:hidden" onClick={() => setMenuOpen(false)} />
       )}
 
-      <div className={`fixed top-0 right-0 z-50 h-full w-72 bg-surface-container border-l border-outline-variant flex flex-col transition-transform duration-300 ease-in-out md:hidden ${
+      <div className={`fixed top-0 right-0 z-50 h-full w-72 bg-primary border-l border-primary/30 flex flex-col transition-transform duration-300 ease-in-out md:hidden ${
         menuOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
-        <div className="flex items-center justify-between px-6 h-16 border-b border-outline-variant">
+        <div className="flex items-center justify-between px-6 h-16 border-b border-primary/30">
           <span className="text-sm font-semibold text-primary-foreground">Navegación</span>
           <button
             onClick={() => setMenuOpen(false)}
