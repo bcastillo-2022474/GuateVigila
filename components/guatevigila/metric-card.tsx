@@ -14,14 +14,14 @@ export function MetricCard({
   icon,
 }: MetricCardProps) {
   const valueColorClass =
-    variant === 'success' ? 'text-secondary' :
+    variant === 'success' ? 'text-foreground' :
     variant === 'warning' ? 'text-tertiary' :
     variant === 'danger' ? 'text-destructive' :
     'text-primary'
 
   return (
     <div className="bg-surface-container-lowest border border-outline-variant p-6 flex flex-col justify-between h-32">
-      <span className="text-xs font-semibold tracking-widest uppercase text-on-surface-variant">
+      <span className="text-xs font-semibold tracking-widest uppercase text-on-surface">
         {label}
       </span>
       <div className="flex items-center gap-2">
@@ -37,7 +37,7 @@ export function MetricCard({
         )}
       </div>
       {subtitle && (
-        <span className="text-sm text-on-surface-variant">{subtitle}</span>
+        <span className="text-sm text-on-surface">{subtitle}</span>
       )}
     </div>
   )

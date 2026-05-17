@@ -104,7 +104,8 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
               return (
                 <div
                   key={data.year}
-                  className={`flex-1 bg-secondary transition-opacity group relative ${
+                  // 👇 AQUÍ ESTÁ EL CAMBIO: Cambiado bg-secondary por bg-black
+                  className={`flex-1 bg-black transition-opacity group relative ${
                     isLatest ? 'opacity-100' : 'opacity-20 hover:opacity-100'
                   }`}
                   style={{ height: `${heightPercent}%` }}

@@ -14,14 +14,14 @@ export function StatsBar({ stats }: StatsBarProps) {
   }
 
   return (
-    <section className="w-full bg-surface-container-low py-2 border-b border-outline-variant">
+    <section className="w-full bg-secondary/50 py-2 border-b border-border">
       <div className="max-w-[1200px] mx-auto px-4 md:px-16">
-        <p className="text-on-surface-variant text-xs font-semibold tracking-wide">
+        <p className="text-muted-foreground text-xs font-semibold tracking-wide">
           {processesAnalyzed.toLocaleString('es-GT')} PROCESOS ANALIZADOS{' '}
           <span className="mx-1">·</span> {currency} {formatNumber(totalAmount)}{' '}
           <span className="mx-1">·</span> {periodStart}–{periodEnd}{' '}
           <span className="mx-1">·</span>{' '}
-          <span className="text-on-tertiary-fixed-variant font-bold">
+          <span className="text-accent font-bold">
             {activeAlerts.toLocaleString('es-GT')} ALERTAS ACTIVAS
           </span>
         </p>
