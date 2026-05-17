@@ -221,7 +221,8 @@ export async function getAlertsPage(filters: AlertListFilters = {}): Promise<Pag
   const offset = (page - 1) * pageSize
 
   const conditions: string[] = []
-  if (filters.signal)  conditions.push(`primary_signal = ${escapeLiteral(filters.signal)}`)
+  if (filters.signal && SIGNAL_PRIORITY.includes(filters.signal as SignalType))
+    conditions.push(`has_${filters.signal} = true`)
   if (filters.year)    conditions.push(`latest_year = ${parseInt(filters.year, 10)}`)
   if (filters.entity)  conditions.push(`buyer_name ILIKE ${escapeLiteral(`%${filters.entity}%`)}`)
 
@@ -268,6 +269,7 @@ export async function getAlertById(id: string): Promise<AlertDetail | null> {
   if (!row[signalFlag]) return null
 
   const supplierNit = getSupplierDisplayIdentifier(row.supplier_id)
+  const isNitSupplier = row.supplier_id.trim().startsWith('GT-NIT-')
 
   return {
     id: row.canonical_id,
@@ -285,7 +287,7 @@ export async function getAlertById(id: string): Promise<AlertDetail | null> {
       year: Number(row.latest_year),
     },
     draftInvestigation: '',
-    guatecomprasUrl: supplierUrl(supplierNit),
+    guatecomprasUrl: isNitSupplier ? supplierUrl(supplierNit) : undefined,
     registroMercantilUrl: buildRegistroMercantilUrl(row.supplier_id),
   }
 }
