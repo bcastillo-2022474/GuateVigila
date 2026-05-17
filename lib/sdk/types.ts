@@ -257,6 +257,15 @@ export interface PaginatedAlerts {
 }
 
 // SDK Client Interface
+export interface SearchResult {
+  type: 'entity' | 'supplier' | 'alert'
+  id: string
+  name: string
+  secondary: string
+  riskLevel: RiskLevel | null
+  href: string
+}
+
 export interface GuateVigilaSDK {
   // Alerts
   getAlerts(): Promise<Alert[]>
@@ -275,6 +284,9 @@ export interface GuateVigilaSDK {
   getSupplierById(id: string): Promise<Supplier | null>
   getSupplierContracts(id: string, filters?: SupplierContractsFilters): Promise<PaginatedSupplierContracts>
   getSupplierAssociates(id: string, page?: number): Promise<PaginatedAssociates>
+
+  // Search
+  search(q: string): Promise<SearchResult[]>
 
   // Stats
   getGlobalStats(): Promise<GlobalStats>

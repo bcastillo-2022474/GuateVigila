@@ -16,8 +16,15 @@ import type {
 } from '../types'
 
 const CURRENCY = 'GTQ'
-const MAX_RISK_SCORE = 100
 const ALERTS_PAGE_SIZE = 20
+
+const SIGNAL_META: Record<SignalType, { label: string; icon: string }> = {
+  single_bidder:   { label: 'Proveedor único recurrente', icon: 'person_off' },
+  short_deadline:  { label: 'Plazo imposible',            icon: 'timer_off' },
+  direct_purchase: { label: 'Abuso compra directa',       icon: 'point_of_sale' },
+  award_gap:       { label: 'Sin contrato formal',         icon: 'assignment_late' },
+  failed_tenders:  { label: 'Alta tasa de desiertos',     icon: 'event_busy' },
+}
 
 const SIGNAL_PRIORITY: SignalType[] = [
   'single_bidder',
@@ -25,51 +32,12 @@ const SIGNAL_PRIORITY: SignalType[] = [
   'direct_purchase',
   'award_gap',
   'failed_tenders',
-] as const
+]
 
-const SIGNAL_META: Record<
-  SignalType,
-  { label: string; icon: string; weight: number }
-> = {
-  single_bidder: {
-    label: 'Proveedor único recurrente',
-    icon: 'person_off',
-    weight: 35,
-  },
-  short_deadline: {
-    label: 'Plazo imposible',
-    icon: 'timer_off',
-    weight: 25,
-  },
-  direct_purchase: {
-    label: 'Abuso compra directa',
-    icon: 'point_of_sale',
-    weight: 20,
-  },
-  award_gap: {
-    label: 'Sin contrato formal',
-    icon: 'assignment_late',
-    weight: 10,
-  },
-  failed_tenders: {
-    label: 'Alta tasa de desiertos',
-    icon: 'event_busy',
-    weight: 10,
-  },
-}
+// ── DB row shape ──────────────────────────────────────────────────────────────
 
-const SIGNAL_SET = new Set<SignalType>(SIGNAL_PRIORITY)
-
-type PairSignalType = 'single_bidder' | 'short_deadline'
-type EntitySignalType = 'direct_purchase' | 'award_gap' | 'failed_tenders'
-
-interface AlertQueryFilters {
-  buyerId?: string
-  entity?: string  // buyer_name ILIKE search
-  year?: string    // filter on latestYear (MAX of tender start year)
-}
-
-interface PairSummaryRow {
+interface AlertPairRow {
+  canonical_id: string
   buyer_id: string
   buyer_name: string
   supplier_id: string
@@ -77,175 +45,37 @@ interface PairSummaryRow {
   contract_count: number
   total_amount: number
   latest_year: number
+  risk_score: number
+  risk_level: RiskLevel
+  primary_signal: SignalType
+  has_single_bidder: boolean
+  has_short_deadline: boolean
+  has_direct_purchase: boolean
+  has_award_gap: boolean
+  has_failed_tenders: boolean
+  single_bidder_count: number | null
+  single_bidder_ratio: number | null
+  sb_total_contracts: number | null
+  sb_total_amount: number | null
+  short_deadline_count: number | null
+  sd_total_amount: number | null
+  direct_count: number | null
+  direct_ratio: number | null
+  dp_total_awards: number | null
+  dp_total_amount: number | null
+  ag_total_awards: number | null
+  ag_total_contracts: number | null
+  gap_ratio: number | null
+  ag_total_amount: number | null
+  total_tenders: number | null
+  failed_count: number | null
+  failed_ratio: number | null
 }
 
-interface SingleBidderRow {
-  buyer_id: string
-  buyer_name: string
-  supplier_id: string
-  supplier_name: string
-  total_contracts: number
-  total_amount: number
-  single_bidder_count: number
-  single_bidder_ratio: number
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-interface ShortDeadlineRow {
-  buyer_id: string
-  buyer_name: string
-  supplier_id: string
-  supplier_name: string
-  short_deadline_count: number
-  total_amount: number
-}
-
-interface DirectPurchaseRow {
-  buyer_id: string
-  buyer_name: string
-  total_awards: number
-  direct_count: number
-  direct_ratio: number
-  total_amount: number
-}
-
-interface AwardGapRow {
-  buyer_id: string
-  buyer_name: string
-  total_awards: number
-  total_contracts: number
-  gap_ratio: number
-  total_amount: number
-}
-
-interface FailedTendersRow {
-  buyer_id: string
-  buyer_name: string
-  total_tenders: number
-  failed_count: number
-  failed_ratio: number
-}
-
-interface PairSummary {
-  buyerId: string
-  buyerName: string
-  supplierId: string
-  supplierName: string
-  contractCount: number
-  totalAmount: number
-  latestYear: number
-}
-
-interface SingleBidderEvidence {
-  type: 'single_bidder'
-  totalContracts: number
-  totalAmount: number
-  singleBidderCount: number
-  singleBidderRatio: number
-}
-
-interface ShortDeadlineEvidence {
-  type: 'short_deadline'
-  shortDeadlineCount: number
-  totalAmount: number
-}
-
-interface DirectPurchaseEvidence {
-  type: 'direct_purchase'
-  totalAwards: number
-  directCount: number
-  directRatio: number
-  totalAmount: number
-}
-
-interface AwardGapEvidence {
-  type: 'award_gap'
-  totalAwards: number
-  totalContracts: number
-  gapRatio: number
-  totalAmount: number
-}
-
-interface FailedTendersEvidence {
-  type: 'failed_tenders'
-  totalTenders: number
-  failedCount: number
-  failedRatio: number
-}
-
-type SignalEvidence =
-  | SingleBidderEvidence
-  | ShortDeadlineEvidence
-  | DirectPurchaseEvidence
-  | AwardGapEvidence
-  | FailedTendersEvidence
-
-interface PairAggregate {
-  summary: PairSummary
-  signals: Map<SignalType, SignalEvidence>
-}
-
-interface MaterializedAlert {
-  alert: Alert
-  canonicalId: string
-  pairKey: string
-  supplierId: string
-  supplierName: string
-  supplierNit: string
-  riskScore: number
-  riskLevel: RiskLevel
-  signalKeys: SignalType[]
-  signalDetails: Signal[]
-  description: string
-  involvedSupplierYear: number
-}
-
-interface AlertSnapshot {
-  alerts: Alert[]
-  alertsByCanonicalId: Map<string, MaterializedAlert>
-  alertsByPairKey: Map<string, MaterializedAlert>
-  entityAlertCounts: Map<string, number>
-  supplierAlertSummaries: Map<string, SupplierAlert[]>
-}
-
-let alertSnapshotPromise: Promise<AlertSnapshot> | null = null
-const buyerAlertSnapshotPromises = new Map<string, Promise<AlertSnapshot>>()
-
-function escapeSqlLiteral(value: string): string {
+function escapeLiteral(value: string): string {
   return `'${value.replace(/'/g, "''")}'`
-}
-
-function buildWhere(baseClauses: string[], filters: AlertQueryFilters): string {
-  const clauses = [...baseClauses]
-  if (filters.buyerId) {
-    clauses.push(`m.buyer_id = ${escapeSqlLiteral(filters.buyerId)}`)
-  }
-  if (filters.entity) {
-    clauses.push(`m.buyer_name ILIKE ${escapeSqlLiteral(`%${filters.entity}%`)}`)
-  }
-  return `WHERE ${clauses.join('\n  AND ')}`
-}
-
-function buildPairKey(buyerId: string, supplierId: string): string {
-  return `${buyerId}::${supplierId}`
-}
-
-function buildAlertId(
-  buyerId: string,
-  supplierId: string,
-  signalType: SignalType
-): string {
-  return `${buyerId}::${supplierId}::${signalType}`
-}
-
-function isSignalType(value: string): value is SignalType {
-  return SIGNAL_SET.has(value as SignalType)
-}
-
-function getRiskLevel(riskScore: number): RiskLevel {
-  if (riskScore >= 60) return 'critical'
-  if (riskScore >= 40) return 'high'
-  if (riskScore >= 20) return 'medium'
-  return 'low'
 }
 
 function compactCurrency(amount: number): string {
@@ -254,755 +84,166 @@ function compactCurrency(amount: number): string {
   return `Q${Math.round(amount).toLocaleString('es-GT')}`
 }
 
-function ratioToPercent(ratio: number, maximumFractionDigits = 0): string {
-  return new Intl.NumberFormat('es-GT', {
-    style: 'percent',
-    maximumFractionDigits,
-  }).format(ratio)
+function ratioToPercent(ratio: number): string {
+  return new Intl.NumberFormat('es-GT', { style: 'percent', maximumFractionDigits: 0 }).format(ratio)
 }
 
-function normalizePairSummaryRows(rows: PairSummaryRow[]): PairSummary[] {
-  return rows
-    .map((row) => ({
-      buyerId: String(row.buyer_id ?? '').trim(),
-      buyerName: String(row.buyer_name ?? '').trim(),
-      supplierId: String(row.supplier_id ?? '').trim(),
-      supplierName: String(row.supplier_name ?? '').trim(),
-      contractCount: Number(row.contract_count ?? 0),
-      totalAmount: Number(row.total_amount ?? 0),
-      latestYear: Number(row.latest_year ?? 0),
-    }))
-    .filter(
-      (row) =>
-        row.buyerId &&
-        row.buyerName &&
-        row.supplierId &&
-        row.supplierName &&
-        row.contractCount > 0
-    )
+function rowToAlert(row: AlertPairRow): Alert {
+  return {
+    id: row.canonical_id,
+    entityId: String(row.buyer_id ?? '').trim(),
+    entityName: String(row.buyer_name ?? '').trim(),
+    riskLevel: row.risk_level,
+    signalKey: row.primary_signal,
+    signalType: SIGNAL_META[row.primary_signal]?.label ?? row.primary_signal,
+    signalIcon: SIGNAL_META[row.primary_signal]?.icon ?? 'warning',
+    year: String(row.latest_year),
+    contractCount: Number(row.contract_count),
+    totalAmount: Number(row.total_amount),
+    currency: CURRENCY,
+  }
 }
 
-function parseAlertId(
-  id: string
-): { buyerId: string; supplierId: string; signalType: SignalType } | null {
-  const normalizedId = (() => {
-    try {
-      return decodeURIComponent(id)
-    } catch {
-      return id
-    }
-  })()
+function buildSignals(row: AlertPairRow): Signal[] {
+  const signals: Signal[] = []
+
+  if (row.has_single_bidder && row.single_bidder_count != null) {
+    signals.push({
+      id: `${row.buyer_id}::${row.supplier_id}::single_bidder`,
+      type: 'single_bidder',
+      title: `${ratioToPercent(Number(row.single_bidder_ratio))} de adjudicaciones con oferente único`,
+      description: SIGNAL_META.single_bidder.label,
+      icon: SIGNAL_META.single_bidder.icon,
+      metrics: [
+        { label: 'del total', value: ratioToPercent(Number(row.single_bidder_ratio)) },
+        { label: 'contratos sin competencia', value: String(row.single_bidder_count) },
+        { label: 'monto adjudicado', value: compactCurrency(Number(row.sb_total_amount)) },
+      ],
+    })
+  }
+
+  if (row.has_short_deadline && row.short_deadline_count != null) {
+    signals.push({
+      id: `${row.buyer_id}::${row.supplier_id}::short_deadline`,
+      type: 'short_deadline',
+      title: `${row.short_deadline_count} adjudicaciones con plazo menor a 72h`,
+      description: SIGNAL_META.short_deadline.label,
+      icon: SIGNAL_META.short_deadline.icon,
+      metrics: [
+        { label: 'procesos bajo 72h', value: String(row.short_deadline_count) },
+        { label: 'monto adjudicado', value: compactCurrency(Number(row.sd_total_amount)) },
+        { label: 'contratos del par', value: String(row.contract_count) },
+      ],
+    })
+  }
+
+  if (row.has_direct_purchase && row.direct_count != null) {
+    signals.push({
+      id: `${row.buyer_id}::${row.supplier_id}::direct_purchase`,
+      type: 'direct_purchase',
+      title: `${ratioToPercent(Number(row.direct_ratio))} de adjudicaciones vía Art. 43 o 54`,
+      description: SIGNAL_META.direct_purchase.label,
+      icon: SIGNAL_META.direct_purchase.icon,
+      metrics: [
+        { label: 'del total de adjudicaciones', value: ratioToPercent(Number(row.direct_ratio)) },
+        { label: 'adjudicaciones por Art. 43/54', value: String(row.direct_count) },
+        { label: 'monto adjudicado en la entidad', value: compactCurrency(Number(row.dp_total_amount)) },
+      ],
+    })
+  }
+
+  if (row.has_award_gap && row.gap_ratio != null) {
+    signals.push({
+      id: `${row.buyer_id}::${row.supplier_id}::award_gap`,
+      type: 'award_gap',
+      title: `${ratioToPercent(Number(row.gap_ratio))} de adjudicaciones sin contrato formal`,
+      description: SIGNAL_META.award_gap.label,
+      icon: SIGNAL_META.award_gap.icon,
+      metrics: [
+        { label: 'sin contrato formal', value: ratioToPercent(Number(row.gap_ratio)) },
+        { label: 'adjudicaciones sin contrato', value: String(Math.max(Number(row.ag_total_awards) - Number(row.ag_total_contracts), 0)) },
+        { label: 'monto adjudicado en la entidad', value: compactCurrency(Number(row.ag_total_amount)) },
+      ],
+    })
+  }
+
+  if (row.has_failed_tenders && row.failed_count != null) {
+    signals.push({
+      id: `${row.buyer_id}::${row.supplier_id}::failed_tenders`,
+      type: 'failed_tenders',
+      title: `${ratioToPercent(Number(row.failed_ratio))} de concursos desiertos o prescindidos`,
+      description: SIGNAL_META.failed_tenders.label,
+      icon: SIGNAL_META.failed_tenders.icon,
+      metrics: [
+        { label: 'de concursos evaluados', value: ratioToPercent(Number(row.failed_ratio)) },
+        { label: 'concursos fallidos', value: String(row.failed_count) },
+        { label: 'exposición del par', value: compactCurrency(Number(row.total_amount)) },
+      ],
+    })
+  }
+
+  // Return in priority order
+  return SIGNAL_PRIORITY.map((s) => signals.find((sig) => sig.type === s)).filter((s): s is Signal => s != null)
+}
+
+function buildDescription(row: AlertPairRow): string {
+  const activeSignals = SIGNAL_PRIORITY.filter((s) => row[`has_${s}` as keyof AlertPairRow])
+  const labels = activeSignals.map((s) => SIGNAL_META[s].label)
+  const joined = labels.length === 1
+    ? labels[0]
+    : `${labels.slice(0, -1).join(', ')} y ${labels[labels.length - 1]}`
+  return `${row.supplier_name} acumula ${Number(row.contract_count).toLocaleString('es-GT')} adjudicaciones con ${row.buyer_name} y activa ${activeSignals.length} señal${activeSignals.length === 1 ? '' : 'es'} de riesgo: ${joined}.`
+}
+
+function parseAlertId(id: string): { buyerId: string; supplierId: string; signalType: SignalType } | null {
+  const normalizedId = (() => { try { return decodeURIComponent(id) } catch { return id } })()
   const parts = normalizedId.split('::')
   if (parts.length !== 3) return null
-
   const [buyerId, supplierId, rawSignalType] = parts
-  if (!buyerId || !supplierId || !isSignalType(rawSignalType)) return null
-
-  return { buyerId, supplierId, signalType: rawSignalType }
+  const validSignals = new Set<string>(SIGNAL_PRIORITY)
+  if (!buyerId || !supplierId || !validSignals.has(rawSignalType)) return null
+  return { buyerId, supplierId, signalType: rawSignalType as SignalType }
 }
 
-function selectPrimarySignal(signalKeys: SignalType[]): SignalType {
-  return (
-    SIGNAL_PRIORITY.find((signalType) => signalKeys.includes(signalType)) ??
-    'failed_tenders'
-  )
-}
-
-function getSignalTitle(
-  evidence: SignalEvidence
-): string {
-  switch (evidence.type) {
-    case 'single_bidder':
-      return `${ratioToPercent(evidence.singleBidderRatio)} de adjudicaciones con oferente único`
-    case 'short_deadline':
-      return `${evidence.shortDeadlineCount} adjudicaciones con plazo menor a 72h`
-    case 'direct_purchase':
-      return `${ratioToPercent(evidence.directRatio)} de adjudicaciones vía Art. 43 o 54`
-    case 'award_gap':
-      return `${ratioToPercent(evidence.gapRatio)} de adjudicaciones sin contrato formal`
-    case 'failed_tenders':
-      return `${ratioToPercent(evidence.failedRatio)} de concursos desiertos o prescindidos`
-  }
-}
-
-function getSignalMetrics(
-  evidence: SignalEvidence,
-  summary: PairSummary
-): Signal['metrics'] {
-  switch (evidence.type) {
-    case 'single_bidder':
-      return [
-        {
-          label: 'del total',
-          value: ratioToPercent(evidence.singleBidderRatio),
-        },
-        {
-          label: 'contratos sin competencia',
-          value: String(evidence.singleBidderCount),
-        },
-        {
-          label: 'monto adjudicado',
-          value: compactCurrency(evidence.totalAmount),
-        },
-      ]
-    case 'short_deadline':
-      return [
-        {
-          label: 'procesos bajo 72h',
-          value: String(evidence.shortDeadlineCount),
-        },
-        {
-          label: 'monto adjudicado',
-          value: compactCurrency(evidence.totalAmount),
-        },
-        {
-          label: 'contratos del par',
-          value: String(summary.contractCount),
-        },
-      ]
-    case 'direct_purchase':
-      return [
-        {
-          label: 'del total de adjudicaciones',
-          value: ratioToPercent(evidence.directRatio),
-        },
-        {
-          label: 'adjudicaciones por Art. 43/54',
-          value: String(evidence.directCount),
-        },
-        {
-          label: 'monto adjudicado en la entidad',
-          value: compactCurrency(evidence.totalAmount),
-        },
-      ]
-    case 'award_gap':
-      return [
-        {
-          label: 'sin contrato formal',
-          value: ratioToPercent(evidence.gapRatio),
-        },
-        {
-          label: 'adjudicaciones sin contrato',
-          value: String(Math.max(evidence.totalAwards - evidence.totalContracts, 0)),
-        },
-        {
-          label: 'monto adjudicado en la entidad',
-          value: compactCurrency(evidence.totalAmount),
-        },
-      ]
-    case 'failed_tenders':
-      return [
-        {
-          label: 'de concursos evaluados',
-          value: ratioToPercent(evidence.failedRatio),
-        },
-        {
-          label: 'concursos fallidos',
-          value: String(evidence.failedCount),
-        },
-        {
-          label: 'exposición del par',
-          value: compactCurrency(summary.totalAmount),
-        },
-      ]
-  }
-}
-
-function buildSignal(
-  signalType: SignalType,
-  evidence: SignalEvidence,
-  summary: PairSummary
-): Signal {
-  return {
-    id: buildAlertId(summary.buyerId, summary.supplierId, signalType),
-    type: signalType,
-    title: getSignalTitle(evidence),
-    description: SIGNAL_META[signalType].label,
-    icon: SIGNAL_META[signalType].icon,
-    metrics: getSignalMetrics(evidence, summary),
-  }
-}
-
-function buildAlertDescription(
-  supplierName: string,
-  entityName: string,
-  summary: PairSummary,
-  signalKeys: SignalType[]
-): string {
-  const labels = signalKeys.map((signalType) => SIGNAL_META[signalType].label)
-  const signalCount = signalKeys.length
-  const joinedLabels =
-    labels.length === 1
-      ? labels[0]
-      : `${labels.slice(0, -1).join(', ')} y ${labels[labels.length - 1]}`
-
-  return `${supplierName} acumula ${summary.contractCount.toLocaleString('es-GT')} adjudicaciones con ${entityName} y activa ${signalCount} señal${signalCount === 1 ? '' : 'es'} de riesgo: ${joinedLabels}.`
-}
-
-function compareAlerts(a: MaterializedAlert, b: MaterializedAlert): number {
-  return (
-    b.riskScore - a.riskScore ||
-    b.alert.totalAmount - a.alert.totalAmount ||
-    b.alert.contractCount - a.alert.contractCount ||
-    a.alert.id.localeCompare(b.alert.id)
-  )
-}
-
-async function runPairSummaryQuery(
-  filters: AlertQueryFilters
-): Promise<PairSummary[]> {
-  const yearHaving = filters.year
-    ? `HAVING MAX(EXTRACT(year FROM m."tender_tenderPeriod_startDate")) = ${parseInt(filters.year, 10)}`
-    : ''
-  const rows = await query<PairSummaryRow>(`
-    SELECT
-      m.buyer_id                                                   AS buyer_id,
-      m.buyer_name                                                 AS buyer_name,
-      s.id                                                         AS supplier_id,
-      s.name                                                       AS supplier_name,
-      COUNT(DISTINCT a.id)                                         AS contract_count,
-      SUM(a.value_amount)                                          AS total_amount,
-      MAX(EXTRACT(year FROM m."tender_tenderPeriod_startDate"))    AS latest_year
-    FROM main m
-    JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-    JOIN awards_suppliers s ON s.awards_id = a.id
-    ${buildWhere(
-      [
-        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
-        'm.buyer_id IS NOT NULL',
-        'm.buyer_name IS NOT NULL',
-        's.id IS NOT NULL',
-        's.name IS NOT NULL',
-      ],
-      filters
-    )}
-    GROUP BY m.buyer_id, m.buyer_name, s.id, s.name
-    ${yearHaving}
-  `)
-
-  return normalizePairSummaryRows(rows)
-}
-
-async function runSingleBidderQuery(
-  filters: AlertQueryFilters
-): Promise<
-  Array<
-    SingleBidderEvidence & {
-      buyerId: string
-      supplierId: string
-    }
-  >
-> {
-  const rows = await query<SingleBidderRow>(`
-    SELECT
-      m.buyer_id                                                   AS buyer_id,
-      m.buyer_name                                                 AS buyer_name,
-      s.id                                                         AS supplier_id,
-      s.name                                                       AS supplier_name,
-      COUNT(DISTINCT a.id)                                         AS total_contracts,
-      SUM(a.value_amount)                                          AS total_amount,
-      COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
-                          THEN a.id END)                           AS single_bidder_count,
-      (
-        COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
-                            THEN a.id END)::double precision / COUNT(DISTINCT a.id)
-      )                                                            AS single_bidder_ratio
-    FROM main m
-    JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-    JOIN awards_suppliers s ON s.awards_id = a.id
-    ${buildWhere(
-      [
-        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
-        'm.buyer_id IS NOT NULL',
-        'm.buyer_name IS NOT NULL',
-        's.id IS NOT NULL',
-        's.name IS NOT NULL',
-      ],
-      filters
-    )}
-    GROUP BY m.buyer_id, m.buyer_name, s.id, s.name
-    HAVING COUNT(DISTINCT a.id) >= 5
-       AND (
-         COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1
-                             THEN a.id END)::double precision / COUNT(DISTINCT a.id)
-       ) >= 0.60
-  `)
-
-  return rows
-    .map((row) => ({
-      type: 'single_bidder' as const,
-      buyerId: String(row.buyer_id ?? '').trim(),
-      supplierId: String(row.supplier_id ?? '').trim(),
-      totalContracts: Number(row.total_contracts ?? 0),
-      totalAmount: Number(row.total_amount ?? 0),
-      singleBidderCount: Number(row.single_bidder_count ?? 0),
-      singleBidderRatio: Number(row.single_bidder_ratio ?? 0),
-    }))
-    .filter((row) => row.buyerId && row.supplierId && row.totalContracts > 0)
-}
-
-async function runShortDeadlineQuery(
-  filters: AlertQueryFilters
-): Promise<
-  Array<
-    ShortDeadlineEvidence & {
-      buyerId: string
-      supplierId: string
-    }
-  >
-> {
-  const rows = await query<ShortDeadlineRow>(`
-    SELECT
-      m.buyer_id                                                   AS buyer_id,
-      m.buyer_name                                                 AS buyer_name,
-      s.id                                                         AS supplier_id,
-      s.name                                                       AS supplier_name,
-      COUNT(DISTINCT a.id)                                         AS short_deadline_count,
-      SUM(a.value_amount)                                          AS total_amount
-    FROM main m
-    JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-    JOIN awards_suppliers s ON s.awards_id = a.id
-    ${buildWhere(
-      [
-        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
-        'EXTRACT(year FROM m."tender_tenderPeriod_endDate") > 2000',
-        `(m."tender_tenderPeriod_endDate"::timestamp - m."tender_tenderPeriod_startDate"::timestamp) < INTERVAL '72 hours'`,
-        'm.buyer_id IS NOT NULL',
-        'm.buyer_name IS NOT NULL',
-        's.id IS NOT NULL',
-        's.name IS NOT NULL',
-      ],
-      filters
-    )}
-    GROUP BY m.buyer_id, m.buyer_name, s.id, s.name
-    HAVING COUNT(DISTINCT a.id) >= 3
-  `)
-
-  return rows
-    .map((row) => ({
-      type: 'short_deadline' as const,
-      buyerId: String(row.buyer_id ?? '').trim(),
-      supplierId: String(row.supplier_id ?? '').trim(),
-      shortDeadlineCount: Number(row.short_deadline_count ?? 0),
-      totalAmount: Number(row.total_amount ?? 0),
-    }))
-    .filter((row) => row.buyerId && row.supplierId && row.shortDeadlineCount > 0)
-}
-
-async function runDirectPurchaseQuery(
-  filters: AlertQueryFilters
-): Promise<
-  Array<
-    DirectPurchaseEvidence & {
-      buyerId: string
-    }
-  >
-> {
-  const rows = await query<DirectPurchaseRow>(`
-    SELECT
-      m.buyer_id                                                   AS buyer_id,
-      m.buyer_name                                                 AS buyer_name,
-      COUNT(DISTINCT a.id)                                         AS total_awards,
-      COUNT(DISTINCT CASE
-        WHEN m."tender_procurementMethodDetails" ILIKE '%Art. 43%'
-          OR m."tender_procurementMethodDetails" ILIKE '%Art. 54%'
-        THEN a.id END)                                             AS direct_count,
-      (
-        COUNT(DISTINCT CASE
-          WHEN m."tender_procurementMethodDetails" ILIKE '%Art. 43%'
-            OR m."tender_procurementMethodDetails" ILIKE '%Art. 54%'
-          THEN a.id END)::double precision / COUNT(DISTINCT a.id)
-      )                                                            AS direct_ratio,
-      SUM(a.value_amount)                                          AS total_amount
-    FROM main m
-    JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-    ${buildWhere(
-      [
-        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
-        'm.buyer_id IS NOT NULL',
-        'm.buyer_name IS NOT NULL',
-      ],
-      filters
-    )}
-    GROUP BY m.buyer_id, m.buyer_name
-    HAVING COUNT(DISTINCT a.id) >= 20
-       AND (
-         COUNT(DISTINCT CASE
-           WHEN m."tender_procurementMethodDetails" ILIKE '%Art. 43%'
-             OR m."tender_procurementMethodDetails" ILIKE '%Art. 54%'
-           THEN a.id END)::double precision / COUNT(DISTINCT a.id)
-       ) >= 0.70
-  `)
-
-  return rows
-    .map((row) => ({
-      type: 'direct_purchase' as const,
-      buyerId: String(row.buyer_id ?? '').trim(),
-      totalAwards: Number(row.total_awards ?? 0),
-      directCount: Number(row.direct_count ?? 0),
-      directRatio: Number(row.direct_ratio ?? 0),
-      totalAmount: Number(row.total_amount ?? 0),
-    }))
-    .filter((row) => row.buyerId && row.totalAwards > 0)
-}
-
-async function runAwardGapQuery(
-  filters: AlertQueryFilters
-): Promise<
-  Array<
-    AwardGapEvidence & {
-      buyerId: string
-    }
-  >
-> {
-  const rows = await query<AwardGapRow>(`
-    SELECT
-      m.buyer_id                                                   AS buyer_id,
-      m.buyer_name                                                 AS buyer_name,
-      COUNT(DISTINCT a.id)                                         AS total_awards,
-      COUNT(DISTINCT c.id)                                         AS total_contracts,
-      (
-        1.0 - COUNT(DISTINCT c.id)::double precision / COUNT(DISTINCT a.id)
-      )                                                            AS gap_ratio,
-      SUM(a.value_amount)                                          AS total_amount
-    FROM main m
-    JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
-    LEFT JOIN contracts c ON c.main_ocid = m.ocid
-    ${buildWhere(
-      [
-        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
-        'm.buyer_id IS NOT NULL',
-        'm.buyer_name IS NOT NULL',
-      ],
-      filters
-    )}
-    GROUP BY m.buyer_id, m.buyer_name
-    HAVING COUNT(DISTINCT a.id) >= 20
-       AND (
-         1.0 - COUNT(DISTINCT c.id)::double precision / COUNT(DISTINCT a.id)
-       ) >= 0.85
-  `)
-
-  return rows
-    .map((row) => ({
-      type: 'award_gap' as const,
-      buyerId: String(row.buyer_id ?? '').trim(),
-      totalAwards: Number(row.total_awards ?? 0),
-      totalContracts: Number(row.total_contracts ?? 0),
-      gapRatio: Number(row.gap_ratio ?? 0),
-      totalAmount: Number(row.total_amount ?? 0),
-    }))
-    .filter((row) => row.buyerId && row.totalAwards > 0)
-}
-
-async function runFailedTendersQuery(
-  filters: AlertQueryFilters
-): Promise<
-  Array<
-    FailedTendersEvidence & {
-      buyerId: string
-    }
-  >
-> {
-  const rows = await query<FailedTendersRow>(`
-    SELECT
-      m.buyer_id                                                   AS buyer_id,
-      m.buyer_name                                                 AS buyer_name,
-      COUNT(*)                                                     AS total_tenders,
-      SUM(CASE WHEN m.tender_status IN ('withdrawn','unsuccessful')
-               THEN 1 ELSE 0 END)                                  AS failed_count,
-      (
-        SUM(CASE WHEN m.tender_status IN ('withdrawn','unsuccessful')
-                 THEN 1 ELSE 0 END)::double precision / COUNT(*)
-      )                                                            AS failed_ratio
-    FROM main m
-    ${buildWhere(
-      [
-        'EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000',
-        'm.buyer_id IS NOT NULL',
-        'm.buyer_name IS NOT NULL',
-      ],
-      filters
-    )}
-    GROUP BY m.buyer_id, m.buyer_name
-    HAVING COUNT(*) >= 20
-       AND (
-         SUM(CASE WHEN m.tender_status IN ('withdrawn','unsuccessful')
-                  THEN 1 ELSE 0 END)::double precision / COUNT(*)
-       ) >= 0.50
-  `)
-
-  return rows
-    .map((row) => ({
-      type: 'failed_tenders' as const,
-      buyerId: String(row.buyer_id ?? '').trim(),
-      totalTenders: Number(row.total_tenders ?? 0),
-      failedCount: Number(row.failed_count ?? 0),
-      failedRatio: Number(row.failed_ratio ?? 0),
-    }))
-    .filter((row) => row.buyerId && row.totalTenders > 0)
-}
-
-async function buildAlertSnapshot(
-  filters: AlertQueryFilters = {}
-): Promise<AlertSnapshot> {
-  const [
-    pairSummaries,
-    singleBidderRows,
-    shortDeadlineRows,
-    directPurchaseRows,
-    awardGapRows,
-    failedTenderRows,
-  ] = await Promise.all([
-    runPairSummaryQuery(filters),
-    runSingleBidderQuery(filters),
-    runShortDeadlineQuery(filters),
-    runDirectPurchaseQuery(filters),
-    runAwardGapQuery(filters),
-    runFailedTendersQuery(filters),
-  ])
-
-  const pairsByKey = new Map<string, PairSummary>()
-  const topPairByBuyer = new Map<string, string>()
-  const nativeSuspiciousPairsByBuyer = new Map<string, Set<string>>()
-  const aggregates = new Map<string, PairAggregate>()
-
-  const sortedSummaries = [...pairSummaries].sort(
-    (a, b) =>
-      b.totalAmount - a.totalAmount ||
-      b.contractCount - a.contractCount ||
-      buildPairKey(a.buyerId, a.supplierId).localeCompare(
-        buildPairKey(b.buyerId, b.supplierId)
-      )
-  )
-
-  for (const summary of sortedSummaries) {
-    const pairKey = buildPairKey(summary.buyerId, summary.supplierId)
-    pairsByKey.set(pairKey, summary)
-
-    if (!topPairByBuyer.has(summary.buyerId)) {
-      topPairByBuyer.set(summary.buyerId, pairKey)
-    }
-  }
-
-  function ensureAggregate(pairKey: string): PairAggregate | null {
-    const summary = pairsByKey.get(pairKey)
-    if (!summary) return null
-
-    let aggregate = aggregates.get(pairKey)
-    if (!aggregate) {
-      aggregate = { summary, signals: new Map() }
-      aggregates.set(pairKey, aggregate)
-    }
-
-    return aggregate
-  }
-
-  function addNativeSignal(
-    buyerId: string,
-    supplierId: string,
-    signalType: PairSignalType,
-    evidence: SignalEvidence
-  ) {
-    const pairKey = buildPairKey(buyerId, supplierId)
-    const aggregate = ensureAggregate(pairKey)
-    if (!aggregate) return
-
-    aggregate.signals.set(signalType, evidence)
-
-    let pairKeys = nativeSuspiciousPairsByBuyer.get(buyerId)
-    if (!pairKeys) {
-      pairKeys = new Set<string>()
-      nativeSuspiciousPairsByBuyer.set(buyerId, pairKeys)
-    }
-    pairKeys.add(pairKey)
-  }
-
-  function getEntitySignalTargets(buyerId: string): string[] {
-    const nativePairs = nativeSuspiciousPairsByBuyer.get(buyerId)
-    if (nativePairs && nativePairs.size > 0) {
-      return [...nativePairs]
-    }
-
-    const seededPair = topPairByBuyer.get(buyerId)
-    return seededPair ? [seededPair] : []
-  }
-
-  function addEntitySignal(
-    buyerId: string,
-    signalType: EntitySignalType,
-    evidence: SignalEvidence
-  ) {
-    for (const pairKey of getEntitySignalTargets(buyerId)) {
-      const aggregate = ensureAggregate(pairKey)
-      if (!aggregate) continue
-      aggregate.signals.set(signalType, evidence)
-    }
-  }
-
-  for (const row of singleBidderRows) {
-    addNativeSignal(row.buyerId, row.supplierId, 'single_bidder', row)
-  }
-
-  for (const row of shortDeadlineRows) {
-    addNativeSignal(row.buyerId, row.supplierId, 'short_deadline', row)
-  }
-
-  for (const row of directPurchaseRows) {
-    addEntitySignal(row.buyerId, 'direct_purchase', row)
-  }
-
-  for (const row of awardGapRows) {
-    addEntitySignal(row.buyerId, 'award_gap', row)
-  }
-
-  for (const row of failedTenderRows) {
-    addEntitySignal(row.buyerId, 'failed_tenders', row)
-  }
-
-  const materializedAlerts = [...aggregates.entries()]
-    .map(([pairKey, aggregate]): MaterializedAlert | null => {
-      const signalKeys = [...aggregate.signals.keys()].sort(
-        (a, b) => SIGNAL_PRIORITY.indexOf(a) - SIGNAL_PRIORITY.indexOf(b)
-      )
-      if (signalKeys.length === 0) return null
-
-      const primarySignal = selectPrimarySignal(signalKeys)
-      const riskScore = Math.min(
-        signalKeys.reduce((total, signalType) => total + SIGNAL_META[signalType].weight, 0),
-        MAX_RISK_SCORE
-      )
-      const riskLevel = getRiskLevel(riskScore)
-      const signalDetails = signalKeys.map((signalType) =>
-        buildSignal(signalType, aggregate.signals.get(signalType)!, aggregate.summary)
-      )
-      const canonicalId = buildAlertId(
-        aggregate.summary.buyerId,
-        aggregate.summary.supplierId,
-        primarySignal
-      )
-      const description = buildAlertDescription(
-        aggregate.summary.supplierName,
-        aggregate.summary.buyerName,
-        aggregate.summary,
-        signalKeys
-      )
-
-      return {
-        alert: {
-          id: canonicalId,
-          entityId: aggregate.summary.buyerId,
-          entityName: aggregate.summary.buyerName,
-          riskLevel,
-          signalKey: primarySignal,
-          signalType: SIGNAL_META[primarySignal].label,
-          signalIcon: SIGNAL_META[primarySignal].icon,
-          year: String(aggregate.summary.latestYear),
-          contractCount: aggregate.summary.contractCount,
-          totalAmount: aggregate.summary.totalAmount,
-          currency: CURRENCY,
-        },
-        canonicalId,
-        pairKey,
-        supplierId: aggregate.summary.supplierId,
-        supplierName: aggregate.summary.supplierName,
-        supplierNit: getSupplierDisplayIdentifier(aggregate.summary.supplierId),
-        riskScore,
-        riskLevel,
-        signalKeys,
-        signalDetails,
-        description,
-        involvedSupplierYear: aggregate.summary.latestYear,
-      }
-    })
-    .filter((alert): alert is MaterializedAlert => alert !== null)
-    .sort(compareAlerts)
-
-  const alertsByCanonicalId = new Map<string, MaterializedAlert>()
-  const alertsByPairKey = new Map<string, MaterializedAlert>()
-  const entityAlertCounts = new Map<string, number>()
-  const supplierAlertSummaries = new Map<string, SupplierAlert[]>()
-
-  for (const item of materializedAlerts) {
-    alertsByCanonicalId.set(item.canonicalId, item)
-    alertsByPairKey.set(item.pairKey, item)
-    entityAlertCounts.set(
-      item.alert.entityId,
-      (entityAlertCounts.get(item.alert.entityId) ?? 0) + 1
-    )
-
-    const supplierAlerts = supplierAlertSummaries.get(item.supplierId) ?? []
-    supplierAlerts.push({
-      id: item.alert.id,
-      severity: item.riskLevel,
-      title: item.alert.signalType,
-      description: `${item.alert.entityName}: ${item.signalKeys.length} señal${item.signalKeys.length === 1 ? '' : 'es'} activas en ${item.alert.contractCount.toLocaleString('es-GT')} adjudicaciones.`,
-      date: item.alert.year,
-    })
-    supplierAlertSummaries.set(item.supplierId, supplierAlerts)
-  }
-
-  return {
-    alerts: materializedAlerts.map((item) => item.alert),
-    alertsByCanonicalId,
-    alertsByPairKey,
-    entityAlertCounts,
-    supplierAlertSummaries,
-  }
-}
-
-async function getCachedAlertSnapshot(): Promise<AlertSnapshot> {
-  if (!alertSnapshotPromise) {
-    alertSnapshotPromise = buildAlertSnapshot().catch((error) => {
-      alertSnapshotPromise = null
-      throw error
-    })
-  }
-  return alertSnapshotPromise
-}
-
-async function getCachedBuyerAlertSnapshot(buyerId: string): Promise<AlertSnapshot> {
-  const cachedSnapshot = buyerAlertSnapshotPromises.get(buyerId)
-  if (cachedSnapshot) return cachedSnapshot
-
-  const snapshotPromise = buildAlertSnapshot({ buyerId }).catch((error) => {
-    buyerAlertSnapshotPromises.delete(buyerId)
-    throw error
-  })
-
-  buyerAlertSnapshotPromises.set(buyerId, snapshotPromise)
-  return snapshotPromise
-}
+// ── Public API ────────────────────────────────────────────────────────────────
 
 export async function getAlerts(): Promise<Alert[]> {
-  const snapshot = await getCachedAlertSnapshot()
-  return snapshot.alerts
+  const rows = await query<AlertPairRow>(`
+    SELECT * FROM alert_pairs
+    ORDER BY risk_score DESC, total_amount DESC
+  `)
+  return rows.map(rowToAlert)
 }
 
-export async function getAlertsPage(
-  filters: AlertListFilters = {}
-): Promise<PaginatedAlerts> {
-  const queryFilters: AlertQueryFilters = {
-    entity: filters.entity || undefined,
-    year: filters.year || undefined,
-  }
-  const snapshot = await buildAlertSnapshot(queryFilters)
-
-  // Signal type is derived post-materialization so it can't be pushed to SQL
-  const filteredAlerts = filters.signal
-    ? snapshot.alerts.filter((alert) => alert.signalKey === filters.signal)
-    : snapshot.alerts
-
+export async function getAlertsPage(filters: AlertListFilters = {}): Promise<PaginatedAlerts> {
   const pageSize = Math.max(1, filters.pageSize ?? ALERTS_PAGE_SIZE)
-  const total = filteredAlerts.length
+  const page = Math.max(1, filters.page ?? 1)
+  const offset = (page - 1) * pageSize
+
+  const conditions: string[] = []
+  if (filters.signal)  conditions.push(`primary_signal = ${escapeLiteral(filters.signal)}`)
+  if (filters.year)    conditions.push(`latest_year = ${parseInt(filters.year, 10)}`)
+  if (filters.entity)  conditions.push(`buyer_name ILIKE ${escapeLiteral(`%${filters.entity}%`)}`)
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  const [countRows, rows] = await Promise.all([
+    query<{ total: number }>(`SELECT COUNT(*) AS total FROM alert_pairs ${where}`),
+    query<AlertPairRow>(`
+      SELECT * FROM alert_pairs
+      ${where}
+      ORDER BY risk_score DESC, total_amount DESC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `),
+  ])
+
+  const total = Number(countRows[0]?.total ?? 0)
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
-  const page = Math.min(Math.max(1, filters.page ?? 1), totalPages)
-  const start = (page - 1) * pageSize
 
   return {
-    alerts: filteredAlerts.slice(start, start + pageSize),
+    alerts: rows.map(rowToAlert),
     total,
-    page,
+    page: Math.min(page, totalPages),
     pageSize,
     totalPages,
   }
@@ -1012,48 +253,68 @@ export async function getAlertById(id: string): Promise<AlertDetail | null> {
   const parsed = parseAlertId(id)
   if (!parsed) return null
 
-  const snapshot = await getCachedBuyerAlertSnapshot(parsed.buyerId)
-  const pairKey = buildPairKey(parsed.buyerId, parsed.supplierId)
-  const materializedAlert = snapshot.alertsByPairKey.get(pairKey)
+  const rows = await query<AlertPairRow>(`
+    SELECT * FROM alert_pairs
+    WHERE buyer_id = ${escapeLiteral(parsed.buyerId)}
+      AND supplier_id = ${escapeLiteral(parsed.supplierId)}
+    LIMIT 1
+  `)
 
-  if (!materializedAlert || !materializedAlert.signalKeys.includes(parsed.signalType)) {
-    return null
-  }
+  const row = rows[0]
+  if (!row) return null
+
+  // The requested signal must be active on this pair
+  const signalFlag = `has_${parsed.signalType}` as keyof AlertPairRow
+  if (!row[signalFlag]) return null
+
+  const supplierNit = getSupplierDisplayIdentifier(row.supplier_id)
 
   return {
-    id: materializedAlert.canonicalId,
-    entityId: materializedAlert.alert.entityId,
-    entityName: materializedAlert.alert.entityName,
-    description: materializedAlert.description,
-    riskScore: materializedAlert.riskScore,
-    riskLevel: materializedAlert.riskLevel,
-    signals: materializedAlert.signalDetails,
+    id: row.canonical_id,
+    entityId: String(row.buyer_id).trim(),
+    entityName: String(row.buyer_name).trim(),
+    description: buildDescription(row),
+    riskScore: Number(row.risk_score),
+    riskLevel: row.risk_level,
+    signals: buildSignals(row),
     involvedSupplier: {
-      id: materializedAlert.supplierId,
-      name: materializedAlert.supplierName,
-      nit: materializedAlert.supplierNit,
-      totalAwarded: materializedAlert.alert.totalAmount,
-      year: materializedAlert.involvedSupplierYear,
+      id: row.supplier_id,
+      name: row.supplier_name,
+      nit: supplierNit,
+      totalAwarded: Number(row.total_amount),
+      year: Number(row.latest_year),
     },
     draftInvestigation: '',
-    guatecomprasUrl: supplierUrl(materializedAlert.supplierNit),
-    registroMercantilUrl: buildRegistroMercantilUrl(materializedAlert.supplierId),
+    guatecomprasUrl: supplierUrl(supplierNit),
+    registroMercantilUrl: buildRegistroMercantilUrl(row.supplier_id),
   }
 }
 
 export async function getActiveAlertCount(): Promise<number> {
-  const snapshot = await getCachedAlertSnapshot()
-  return snapshot.alerts.length
+  const rows = await query<{ total: number }>(`SELECT COUNT(*) AS total FROM alert_pairs`)
+  return Number(rows[0]?.total ?? 0)
 }
 
 export async function getEntityActiveAlertCounts(): Promise<Map<string, number>> {
-  const snapshot = await getCachedAlertSnapshot()
-  return snapshot.entityAlertCounts
+  const rows = await query<{ buyer_id: string; alert_count: number }>(`
+    SELECT buyer_id, COUNT(*) AS alert_count
+    FROM alert_pairs
+    GROUP BY buyer_id
+  `)
+  return new Map(rows.map((r) => [String(r.buyer_id).trim(), Number(r.alert_count)]))
 }
 
-export async function getSupplierAlertsBySupplierId(
-  supplierId: string
-): Promise<SupplierAlert[]> {
-  const snapshot = await getCachedAlertSnapshot()
-  return snapshot.supplierAlertSummaries.get(supplierId) ?? []
+export async function getSupplierAlertsBySupplierId(supplierId: string): Promise<SupplierAlert[]> {
+  const rows = await query<AlertPairRow>(`
+    SELECT * FROM alert_pairs
+    WHERE supplier_id = ${escapeLiteral(supplierId)}
+    ORDER BY risk_score DESC
+  `)
+  return rows.map((row) => ({
+    id: row.canonical_id,
+    severity: row.risk_level,
+    title: SIGNAL_META[row.primary_signal]?.label ?? row.primary_signal,
+    description: `${row.buyer_name}: ${SIGNAL_PRIORITY.filter((s) => row[`has_${s}` as keyof AlertPairRow]).length} señal${SIGNAL_PRIORITY.filter((s) => row[`has_${s}` as keyof AlertPairRow]).length === 1 ? '' : 'es'} activas en ${Number(row.contract_count).toLocaleString('es-GT')} adjudicaciones.`,
+    date: String(row.latest_year),
+  }))
 }

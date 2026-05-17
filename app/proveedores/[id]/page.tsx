@@ -1,7 +1,6 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { client } from '@/lib/sdk/client'
 import type { PaginatedAssociates, RiskLevel } from '@/lib/sdk/types'
 import { SITE, SOCIAL } from '@/lib/constants/site'
@@ -97,12 +96,6 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
     <>
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-20">
         <div>
-          <nav className="mb-2">
-            <Link href="/proveedores" className="text-on-surface-variant text-xs font-semibold flex items-center gap-1 hover:text-primary">
-              <span className="material-symbols-outlined text-base">arrow_back</span>
-              Volver a listado
-            </Link>
-          </nav>
           <h1 className="text-3xl font-bold mb-1">{supplier.name}</h1>
           <p className="text-base text-on-surface-variant">
             NIT: {supplier.nit}

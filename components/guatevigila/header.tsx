@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useTransition } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useDebouncedCallback } from 'use-debounce'
+import { searchAction } from '@/lib/actions/search'
+import type { SearchResult } from '@/lib/sdk/types'
 
 interface NavItem {
   href: string
@@ -17,21 +20,162 @@ const navItems: NavItem[] = [
   { href: '/faq', label: 'Metodología' },
 ]
 
+const TYPE_LABEL: Record<SearchResult['type'], string> = {
+  entity: 'Entidad',
+  supplier: 'Proveedor',
+  alert: 'Alerta',
+}
+
+const RISK_COLORS: Record<string, string> = {
+  critical: 'text-destructive',
+  high: 'text-destructive',
+  medium: 'text-on-tertiary-fixed-variant',
+  low: 'text-secondary',
+}
+
+const RISK_LABELS: Record<string, string> = {
+  critical: 'Crítico',
+  high: 'Alto',
+  medium: 'Medio',
+  low: 'Bajo',
+}
+
 interface HeaderProps {
   showBackButton?: boolean
   backHref?: string
+}
+
+function OmnisearchInput() {
+  const router = useRouter()
+  const [q, setQ] = useState('')
+  const [results, setResults] = useState<SearchResult[]>([])
+  const [open, setOpen] = useState(false)
+  const [keyboardIndex, setKeyboardIndex] = useState(-1)
+  const [, startTransition] = useTransition()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const runSearch = useDebouncedCallback((value: string) => {
+    if (value.trim().length < 2) {
+      setResults([])
+      setOpen(false)
+      return
+    }
+    startTransition(async () => {
+      const res = await searchAction(value)
+      setResults(res)
+      setOpen(res.length > 0)
+      setKeyboardIndex(-1)
+    })
+  }, 300)
+
+  const handleChange = (value: string) => {
+    setQ(value)
+    runSearch(value)
+  }
+
+  const navigate = (href: string) => {
+    setOpen(false)
+    setQ('')
+    setResults([])
+    router.push(href)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!open) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setKeyboardIndex((i) => Math.min(i + 1, results.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setKeyboardIndex((i) => Math.max(i - 1, -1))
+    } else if (e.key === 'Enter' && keyboardIndex >= 0) {
+      e.preventDefault()
+      navigate(results[keyboardIndex].href)
+    } else if (e.key === 'Escape') {
+      setOpen(false)
+      inputRef.current?.blur()
+    }
+  }
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  return (
+    <div ref={containerRef} className="flex-1 max-w-xl relative hidden md:block">
+      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg pointer-events-none">
+        search
+      </span>
+      <input
+        ref={inputRef}
+        type="text"
+        value={q}
+        onChange={(e) => handleChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onFocus={() => results.length > 0 && setOpen(true)}
+        placeholder="Buscar entidades, proveedores o alertas..."
+        className="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant focus:outline-none focus:border-primary text-sm rounded-sm"
+        autoComplete="off"
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+      />
+
+      {open && results.length > 0 && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-outline-variant shadow-lg z-50 overflow-hidden rounded-sm">
+          {results.map((result, i) => {
+            const isKeyboard = i === keyboardIndex
+            return (
+              <button
+                key={result.id}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); navigate(result.href) }}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-outline-variant ${
+                  isKeyboard ? 'not-hover:bg-surface-container-highest' : ''
+                } ${i > 0 ? 'border-t border-outline-variant' : ''}`}
+              >
+                <span className="material-symbols-outlined text-lg shrink-0 text-outline">
+                  {result.type === 'entity' ? 'account_balance' : result.type === 'supplier' ? 'storefront' : 'warning'}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate text-on-surface">{result.name}</p>
+                  <p className="text-xs truncate text-on-surface-variant">{result.secondary}</p>
+                </div>
+                <div className="shrink-0 flex items-center gap-2">
+                  {result.riskLevel && (
+                    <span className={`text-xs font-bold uppercase ${RISK_COLORS[result.riskLevel]}`}>
+                      {RISK_LABELS[result.riskLevel]}
+                    </span>
+                  )}
+                  <span className="text-[10px] font-semibold uppercase tracking-wide bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 rounded-sm">
+                    {TYPE_LABEL[result.type]}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // Close menu on route change
   useEffect(() => {
     setMenuOpen(false)
   }, [pathname])
 
-  // Prevent body scroll when menu is open
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
@@ -62,16 +206,7 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
                 GuateVigila
               </span>
             </Link>
-            <div className="flex-1 max-w-xl relative hidden md:block">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">
-                search
-              </span>
-              <input
-                type="text"
-                placeholder="Buscar entidades, proveedores o alertas..."
-                className="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant focus:outline-none focus:border-primary text-sm rounded-sm"
-              />
-            </div>
+            <OmnisearchInput />
           </div>
 
           {/* Desktop nav */}

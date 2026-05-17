@@ -3,6 +3,7 @@ import * as alerts from './queries/alerts'
 import * as entities from './queries/entities'
 import * as suppliers from './queries/suppliers'
 import * as stats from './queries/stats'
+import * as search from './queries/search'
 
 export const client: GuateVigilaSDK = {
   getAlerts: alerts.getAlerts,
@@ -17,5 +18,6 @@ export const client: GuateVigilaSDK = {
   getSupplierById: suppliers.getSupplierById,
   getSupplierContracts: suppliers.getSupplierContracts,
   getSupplierAssociates: suppliers.getSupplierAssociates,
+  search: search.search,
   getGlobalStats: stats.getGlobalStats,
 }
