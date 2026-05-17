@@ -13,6 +13,14 @@ export const SIGNAL_LABELS: Record<string, string> = {
   failed_tenders: 'Alta tasa de desiertos',
 }
 
+const SIGNAL_ICONS: Record<string, string> = {
+  single_bidder: 'person_off',
+  short_deadline: 'timer_off',
+  direct_purchase: 'point_of_sale',
+  award_gap: 'assignment_late',
+  failed_tenders: 'event_busy',
+}
+
 function getRiskBadgeClasses(riskLevel: RiskLevel): string {
   switch (riskLevel) {
     case 'critical':
@@ -54,11 +62,23 @@ export function AlertCard({ alert }: AlertCardProps) {
               {getRiskLabel(alert.riskLevel)}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-4 md:gap-8 text-on-surface-variant text-sm">
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-lg">{alert.signalIcon}</span>
-              {SIGNAL_LABELS[alert.signalType] ?? alert.signalType}
-            </span>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            {alert.activeSignals.map((s) => (
+              <span
+                key={s}
+                title={SIGNAL_LABELS[s]}
+                className={`flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold tracking-tight uppercase rounded-sm border transition-colors ${
+                  s === alert.signalKey
+                    ? 'bg-surface-container-high border-outline text-on-surface'
+                    : 'bg-surface-container-lowest border-outline-variant text-on-surface-variant hover:bg-surface-container-low hover:border-outline'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm leading-none">{SIGNAL_ICONS[s]}</span>
+                {SIGNAL_LABELS[s]}
+              </span>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-4 md:gap-8 text-on-surface-variant text-sm mt-2">
             <span className="flex items-center gap-1.5">
               <span className="material-symbols-outlined text-lg">calendar_today</span>
               {alert.year}

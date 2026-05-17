@@ -89,6 +89,7 @@ function ratioToPercent(ratio: number): string {
 }
 
 function rowToAlert(row: AlertPairRow): Alert {
+  const activeSignals = SIGNAL_PRIORITY.filter((s) => row[`has_${s}` as keyof AlertPairRow])
   return {
     id: row.canonical_id,
     entityId: String(row.buyer_id ?? '').trim(),
@@ -97,6 +98,7 @@ function rowToAlert(row: AlertPairRow): Alert {
     signalKey: row.primary_signal,
     signalType: SIGNAL_META[row.primary_signal]?.label ?? row.primary_signal,
     signalIcon: SIGNAL_META[row.primary_signal]?.icon ?? 'warning',
+    activeSignals,
     year: String(row.latest_year),
     contractCount: Number(row.contract_count),
     totalAmount: Number(row.total_amount),
@@ -242,7 +244,7 @@ export async function getAlertsPage(filters: AlertListFilters = {}): Promise<Pag
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   return {
-    alerts: rows.map(rowToAlert),
+    alerts: rows.map((r) => rowToAlert(r)),
     total,
     page: Math.min(page, totalPages),
     pageSize,

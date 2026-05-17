@@ -19,6 +19,7 @@ export interface Alert {
   signalKey: SignalType
   signalType: string
   signalIcon: string
+  activeSignals: SignalType[]
   year: string
   contractCount: number
   totalAmount: number
