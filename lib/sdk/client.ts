@@ -6,11 +6,14 @@ import * as stats from './queries/stats'
 
 export const client: GuateVigilaSDK = {
   getAlerts: alerts.getAlerts,
+  getAlertsPage: alerts.getAlertsPage,
   getAlertById: alerts.getAlertById,
   getEntities: entities.getEntities,
+  getEntitiesPage: entities.getEntitiesPage,
   getEntityById: entities.getEntityById,
   getEntitySuppliers: entities.getEntitySuppliers,
   getSuppliers: suppliers.getSuppliers,
+  getSuppliersPage: suppliers.getSuppliers,
   getSupplierById: suppliers.getSupplierById,
   getSupplierContracts: suppliers.getSupplierContracts,
   getSupplierAssociates: suppliers.getSupplierAssociates,

@@ -3,12 +3,20 @@
 // ===========================================
 
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low'
+export type SignalType =
+  | 'single_bidder'
+  | 'short_deadline'
+  | 'direct_purchase'
+  | 'award_gap'
+  | 'failed_tenders'
 
 export interface Alert {
+  // Stable alert id: {buyer_id}::{supplier_id}::{primary_signal}
   id: string
   entityId: string
   entityName: string
   riskLevel: RiskLevel
+  signalKey: SignalType
   signalType: string
   signalIcon: string
   year: string
@@ -18,6 +26,8 @@ export interface Alert {
 }
 
 export interface AlertDetail {
+  // Detail always resolves to the canonical alert for the pair, even if the route
+  // was opened through a non-primary active signal.
   id: string
   entityId: string
   entityName: string
@@ -33,12 +43,15 @@ export interface AlertDetail {
     year: number
   }
   draftInvestigation: string
+  // External links are only exposed when they can be derived reliably.
+  guatecomprasUrl?: string
+  registroMercantilUrl?: string
   networkMapUrl?: string
 }
 
 export interface Signal {
   id: string
-  type: string
+  type: SignalType
   title: string
   description: string
   icon: string
@@ -104,6 +117,7 @@ export interface Supplier {
     contractCount: number
   }[]
   alerts: SupplierAlert[]
+  registroMercantilUrl?: string
 }
 
 export interface SupplierContractsFilters {
@@ -174,6 +188,10 @@ export interface PaginatedEntityList {
   page: number
   pageSize: number
   totalPages: number
+  summary: {
+    totalContracts: number
+    totalAlerts: number
+  }
 }
 
 // Entity List Item (for explorer view)
@@ -192,6 +210,7 @@ export interface EntityListItem {
 export interface SupplierFilters {
   q?: string
   page?: number
+  pageSize?: number
 }
 
 export interface PaginatedSupplierList {
@@ -200,6 +219,10 @@ export interface PaginatedSupplierList {
   page: number
   pageSize: number
   totalPages: number
+  summary: {
+    totalContracts: number
+    highRiskSuppliers: number
+  }
 }
 
 // Supplier List Item (for explorer view)
@@ -220,7 +243,11 @@ export interface AlertFilters {
   year?: string
   entity?: string
   page?: number
+  pageSize?: number
 }
+
+// Alias used by alerts.ts
+export type AlertListFilters = AlertFilters
 
 export interface PaginatedAlerts {
   alerts: Alert[]
@@ -233,20 +260,23 @@ export interface PaginatedAlerts {
 // SDK Client Interface
 export interface GuateVigilaSDK {
   // Alerts
-  getAlerts(filters?: AlertFilters): Promise<PaginatedAlerts>
+  getAlerts(): Promise<Alert[]>
+  getAlertsPage(filters?: AlertFilters): Promise<PaginatedAlerts>
   getAlertById(id: string): Promise<AlertDetail | null>
-  
+
   // Entities
   getEntities(filters?: EntityFilters): Promise<PaginatedEntityList>
+  getEntitiesPage(filters?: EntityFilters): Promise<PaginatedEntityList>
   getEntityById(id: string): Promise<Entity | null>
   getEntitySuppliers(id: string, filters?: EntitySuppliersFilters): Promise<PaginatedSuppliers>
-  
+
   // Suppliers
   getSuppliers(filters?: SupplierFilters): Promise<PaginatedSupplierList>
+  getSuppliersPage(filters?: SupplierFilters): Promise<PaginatedSupplierList>
   getSupplierById(id: string): Promise<Supplier | null>
   getSupplierContracts(id: string, filters?: SupplierContractsFilters): Promise<PaginatedSupplierContracts>
   getSupplierAssociates(id: string, page?: number): Promise<PaginatedAssociates>
-  
+
   // Stats
   getGlobalStats(): Promise<GlobalStats>
 }

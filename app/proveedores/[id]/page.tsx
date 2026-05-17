@@ -77,7 +77,7 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-20">
         <div>
           <nav className="mb-2">
-            <Link href="/" className="text-on-surface-variant text-xs font-semibold flex items-center gap-1 hover:text-primary">
+            <Link href="/proveedores" className="text-on-surface-variant text-xs font-semibold flex items-center gap-1 hover:text-primary">
               <span className="material-symbols-outlined text-base">arrow_back</span>
               Volver a listado
             </Link>
@@ -87,15 +87,17 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
             NIT: {supplier.nit}
           </p>
         </div>
-        <a
-          href={`https://eregistros.registromercantil.gob.gt/index.jsp?nit=${supplier.nit.replace('K', '')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="border border-outline-variant text-primary px-6 py-2 rounded-sm text-xs font-semibold hover:bg-surface-container-low transition-colors flex items-center gap-2"
-        >
-          Registro Mercantil
-          <span className="material-symbols-outlined text-lg">open_in_new</span>
-        </a>
+        {supplier.registroMercantilUrl && (
+          <a
+            href={supplier.registroMercantilUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-outline-variant text-primary px-6 py-2 rounded-sm text-xs font-semibold hover:bg-surface-container-low transition-colors flex items-center gap-2"
+          >
+            Registro Mercantil
+            <span className="material-symbols-outlined text-lg">open_in_new</span>
+          </a>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-20">
@@ -188,7 +190,7 @@ export default async function SupplierProfilePage({ params, searchParams }: Page
 
   return (
     <div className="min-h-screen bg-background">
-      <Header showBackButton backHref="/" />
+      <Header showBackButton backHref="/proveedores" />
 
       <main className="max-w-[1200px] mx-auto px-4 md:px-16 py-12">
         <Suspense fallback={<ContentSkeleton />}>

@@ -13,6 +13,8 @@ interface PageProps {
   searchParams: Promise<{ signal?: string; year?: string; entity?: string; page?: string }>
 }
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: META.pages.alertas.title,
   description: META.pages.alertas.description,
@@ -43,7 +45,7 @@ async function StatsBarLoader() {
 async function AlertListLoader({
   signal, year, entity, page,
 }: { signal: string; year: string; entity: string; page: number }) {
-  const result = await client.getAlerts({
+  const result = await client.getAlertsPage({
     signal: signal || undefined,
     year: year || undefined,
     entity: entity || undefined,
@@ -136,4 +138,3 @@ export default async function AlertQueuePage({ searchParams }: PageProps) {
     </div>
   )
 }
-

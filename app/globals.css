@@ -62,7 +62,7 @@
 }
 
 @theme inline {
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: 'Aptos', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
   
   --color-background: #f8f9fa;

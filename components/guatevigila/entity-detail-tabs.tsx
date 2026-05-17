@@ -70,7 +70,7 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
     return amount.toLocaleString('es-GT')
   }
 
-  const maxAmount = Math.max(...entity.yearlyData.map((d) => d.amount))
+  const maxAmount = Math.max(0, ...entity.yearlyData.map((d) => d.amount))
 
   const pageNumbers = (() => {
     if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -99,7 +99,7 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
           </div>
           <div className="flex items-end gap-4 h-48 w-full border-b border-outline-variant pb-1">
             {entity.yearlyData.map((data, idx) => {
-              const heightPercent = (data.amount / maxAmount) * 100
+              const heightPercent = maxAmount > 0 ? (data.amount / maxAmount) * 100 : 0
               const isLatest = idx === entity.yearlyData.length - 1
               return (
                 <div
@@ -141,7 +141,7 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
             }`}
           >
             <span className="material-symbols-outlined text-base align-middle mr-1.5" style={{ fontSize: 16 }}>table_rows</span>
-            Contratos por proveedor
+            Contratos por proveedor (2020-2024)
           </button>
           <button
             onClick={() => setActiveTab('grafo')}

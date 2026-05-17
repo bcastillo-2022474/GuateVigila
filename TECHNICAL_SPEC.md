@@ -52,7 +52,7 @@
 
 No hay pipeline separado, no hay archivos JSON generados, no hay backend independiente. Todo corre dentro del proceso de Next.js. DuckDB se inicializa una vez en el primer request y reutiliza la conexión para los siguientes.
 
-La arquitectura es deliberadamente simple: el pipeline corre offline, genera JSON estático, y el frontend los consume. No hay base de datos en producción. No hay autenticación. No hay estado del lado del servidor.
+La arquitectura es deliberadamente simple: las queries SQL viven en `lib/sdk/queries/`, se ejecutan en runtime sobre DuckDB embebido, y los Server Components consumen el SDK directamente. No hay base de datos externa, no hay autenticación y no hay estado persistente del lado del servidor.
 
 ---
 
@@ -62,14 +62,16 @@ La arquitectura es deliberadamente simple: el pipeline corre offline, genera JSO
 
 ```json
 {
-  "id": "GT-IGSS-2387412-2024",
+  "id": "GT-NIT-01013261::GT-NIT-2387412::single_bidder",
   "entity_id": "GT-NIT-01013261",
   "entity_name": "IGSS",
   "supplier_id": "GT-NIT-2387412",
   "supplier_name": "BODEGA FARMACÉUTICA S.A.",
   "year": 2024,
-  "risk_score": 94,
-  "risk_level": "high",
+  "risk_score": 80,
+  "risk_level": "critical",
+  "signal_key": "single_bidder",
+  "signal_type": "Proveedor único recurrente",
   "signals": [
     {
       "type": "single_bidder",
@@ -80,13 +82,13 @@ La arquitectura es deliberadamente simple: el pipeline corre offline, genera JSO
     },
     {
       "type": "short_deadline",
-      "label": "Licitaciones < 48h",
+      "label": "Plazo < 72h",
       "value": 12,
       "threshold": 3,
       "contracts_affected": 12
     },
     {
-      "type": "direct_purchase_abuse",
+      "type": "direct_purchase",
       "label": "Abuso compra directa",
       "value": 0.87,
       "threshold": 0.70,
@@ -95,8 +97,7 @@ La arquitectura es deliberadamente simple: el pipeline corre offline, genera JSO
   ],
   "total_amount_gtq": 4200000,
   "contract_count": 38,
-  "guatecompras_url": "https://www.guatecompras.gt/proveedores/...",
-  "registro_mercantil_url": "https://eregistros.registromercantil.gob.gt/?nit=2387412",
+  "registro_mercantil_url": "https://eregistros.registromercantil.gob.gt/index.jsp?nit=2387412",
   "created_at": "2026-05-15"
 }
 ```
@@ -151,7 +152,7 @@ La arquitectura es deliberadamente simple: el pipeline corre offline, genera JSO
 
 ## Pipeline de detección
 
-El pipeline se ejecuta en Python sobre los CSV del OCDS. Usa DuckDB para no cargar los archivos completos en memoria (el CSV de 2024 tiene 276k filas en main.csv y 5 archivos relacionados).
+El pipeline se implementa como queries SQL en `lib/sdk/queries/alerts.ts` y corre en runtime sobre DuckDB embebido en Next.js. Usa los CSV del OCDS como source of truth sin generar artefactos intermedios.
 
 ### Joins base
 
@@ -220,6 +221,8 @@ GROUP BY buyer_id, buyer_name, supplier_id, supplier_name
 HAVING short_deadline_count >= 3;
 ```
 
+Las alertas públicas se fusionan por par `(buyer_id, supplier_id)`: si el mismo par activa varias señales, la cola muestra una sola alerta con score acumulado. Las señales por entidad (`direct_purchase`, `award_gap`, `failed_tenders`) se propagan a los pares del mismo comprador que ya activaron `single_bidder` o `short_deadline`; si no existe ninguno, se adjuntan al proveedor top por monto adjudicado de esa entidad.
+
 ### Señal 3 — Abuso de compra directa por entidad
 
 ```sql
@@ -282,27 +285,22 @@ HAVING total >= 20
 
 ### Cálculo del score de riesgo
 
-```python
-def calculate_risk_score(signals: list[dict]) -> int:
-    """
-    Score 0-100 basado en número y severidad de señales.
-    Cada señal aporta puntos según qué tan lejos está del umbral.
-    """
-    weights = {
-        "single_bidder":      35,
-        "short_deadline":     25,
-        "direct_purchase":    20,
-        "award_gap":          10,
-        "failed_tenders":     10,
-    }
-    score = 0
-    for signal in signals:
-        base_weight = weights.get(signal["type"], 0)
-        # Amplificador: qué tan lejos está del umbral (max 2x)
-        severity = min(signal["value"] / signal["threshold"], 2.0)
-        score += base_weight * severity
-    return min(int(score), 100)
+```ts
+const weights = {
+  single_bidder: 35,
+  short_deadline: 25,
+  direct_purchase: 20,
+  award_gap: 10,
+  failed_tenders: 10,
+} as const
+
+function calculateRiskScore(activeSignals: SignalType[]): number {
+  const score = activeSignals.reduce((total, signal) => total + weights[signal], 0)
+  return Math.min(score, 100)
+}
 ```
+
+`guatecompras_url` es opcional en el detalle público: solo se expone cuando puede derivarse de forma confiable del dataset actual. `registro_mercantil_url` se expone para IDs `GT-NIT-*`.
 
 ---
 
@@ -337,7 +335,7 @@ No acuses, presenta los hechos y el patrón estadístico detectado.
 Usa un tono periodístico directo.
 
 Entidad: ${alert.entity_name}
-Proveedor: ${alert.supplier_name} (NIT: ${alert.supplier_id})
+Proveedor: ${alert.supplier_name} (Identificador: ${alert.supplier_id})
 Monto total: Q${alert.total_amount_gtq.toLocaleString()}
 Contratos: ${alert.contract_count}
 Señales detectadas: ${alert.signals.map(s => s.label).join(', ')}

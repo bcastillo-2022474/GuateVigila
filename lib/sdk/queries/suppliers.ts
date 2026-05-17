@@ -1,5 +1,6 @@
 import type { Associate, PaginatedAssociates, PaginatedSupplierContracts, PaginatedSupplierList, RiskLevel, Supplier, SupplierContractsFilters, SupplierFilters, SupplierListItem } from '../types'
 import { query } from '@/lib/db/index'
+import { buildRegistroMercantilUrl } from '../supplier-identity'
 
 const PAGE_SIZE_LIST = 20
 const PAGE_SIZE = 15
@@ -23,13 +24,28 @@ export async function getSuppliers(filters: SupplierFilters = {}): Promise<Pagin
     : ''
 
   const [totalRows, rows] = await Promise.all([
-    query<{ total: number }>(`
-      SELECT COUNT(DISTINCT s.id) AS total
-      FROM awards_suppliers s
-      JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
-      JOIN main m   ON m.ocid = a.main_ocid
-      WHERE EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
-        ${searchClause}
+    query<{ total: number; total_contracts: number; high_risk_suppliers: number }>(`
+      WITH stats AS (
+        SELECT
+          s.id AS ocds_id,
+          COUNT(DISTINCT a.id) AS contract_count,
+          COALESCE(SUM(a.value_amount), 0) AS total_amount,
+          COUNT(DISTINCT CASE WHEN m."tender_numberOfTenderers" = 1 THEN a.id END) AS single_bidder_count
+        FROM awards_suppliers s
+        JOIN awards a ON a.id = s.awards_id AND a.status = 'active'
+        JOIN main m   ON m.ocid = a.main_ocid
+        WHERE EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
+          ${searchClause}
+        GROUP BY s.id
+      )
+      SELECT
+        COUNT(*) AS total,
+        COALESCE(SUM(contract_count), 0) AS total_contracts,
+        COUNT(*) FILTER (
+          WHERE (CASE WHEN contract_count > 0 THEN single_bidder_count::float / contract_count ELSE 0 END) > 0.7
+             OR total_amount > 1000000000
+        ) AS high_risk_suppliers
+      FROM stats
     `),
 
     query<{
@@ -78,7 +94,17 @@ export async function getSuppliers(filters: SupplierFilters = {}): Promise<Pagin
     }
   })
 
-  return { suppliers, total, page, pageSize: PAGE_SIZE_LIST, totalPages: Math.ceil(total / PAGE_SIZE_LIST) }
+  return {
+    suppliers,
+    total,
+    page,
+    pageSize: PAGE_SIZE_LIST,
+    totalPages: Math.ceil(total / PAGE_SIZE_LIST),
+    summary: {
+      totalContracts: Number(totalRows[0]?.total_contracts ?? 0),
+      highRiskSuppliers: Number(totalRows[0]?.high_risk_suppliers ?? 0),
+    },
+  }
 }
 
 export async function getSupplierById(id: string): Promise<Supplier | null> {
@@ -152,6 +178,7 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
     period: `${periodStart}–${periodEnd}`,
     yearlyData: years,
     alerts: [],
+    registroMercantilUrl: buildRegistroMercantilUrl(ocdsId),
   }
 }
 

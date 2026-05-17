@@ -3,10 +3,10 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { client } from '@/lib/sdk/client'
+import type { RiskLevel } from '@/lib/sdk/types'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { DraftSection } from '@/components/guatevigila/draft-section'
-import { getRiskLabel } from '@/components/guatevigila/alert-card'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -30,16 +30,49 @@ function formatCurrency(amount: number) {
   }).format(amount)
 }
 
+function getRiskVisuals(riskLevel: RiskLevel) {
+  switch (riskLevel) {
+    case 'critical':
+      return {
+        label: 'Riesgo Crítico',
+        textClass: 'text-destructive',
+        ringColor: 'var(--destructive)',
+      }
+    case 'high':
+      return {
+        label: 'Riesgo Alto',
+        textClass: 'text-destructive',
+        ringColor: 'var(--destructive)',
+      }
+    case 'medium':
+      return {
+        label: 'Riesgo Medio',
+        textClass: 'text-on-tertiary-fixed-variant',
+        ringColor: 'var(--on-tertiary-fixed-variant)',
+      }
+    default:
+      return {
+        label: 'Riesgo Bajo',
+        textClass: 'text-secondary',
+        ringColor: 'var(--secondary)',
+      }
+  }
+}
+
 async function AlertContent({ id }: { id: string }) {
   const alert = await client.getAlertById(id)
   if (!alert) notFound()
+
+  const riskVisuals = getRiskVisuals(alert.riskLevel)
 
   return (
     <>
       <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-20">
         <div className="max-w-2xl">
-          <span className="text-xs font-semibold tracking-widest uppercase text-destructive mb-1 block">
-            Alerta de Riesgo {getRiskLabel(alert.riskLevel)}
+          <span
+            className={`text-xs font-semibold tracking-widest uppercase mb-1 block ${riskVisuals.textClass}`}
+          >
+            Alerta de {riskVisuals.label}
           </span>
           <h1 className="text-3xl font-bold text-on-surface mb-2">{alert.entityName}</h1>
           <p className="text-on-surface-variant text-base max-w-xl">{alert.description}</p>
@@ -48,7 +81,7 @@ async function AlertContent({ id }: { id: string }) {
           <div
             className="relative w-24 h-24 rounded-full flex items-center justify-center p-1"
             style={{
-              background: `conic-gradient(#ba1a1a 0% ${alert.riskScore}%, #e1e3e4 ${alert.riskScore}% 100%)`,
+              background: `conic-gradient(${riskVisuals.ringColor} 0% ${alert.riskScore}%, var(--surface-container-highest) ${alert.riskScore}% 100%)`,
             }}
           >
             <div className="bg-surface w-full h-full rounded-full flex items-center justify-center">
@@ -59,8 +92,12 @@ async function AlertContent({ id }: { id: string }) {
             </div>
           </div>
           <div>
-            <span className="text-xs font-semibold block text-on-surface-variant">Score de Riesgo</span>
-            <span className="text-xl font-semibold text-destructive">{getRiskLabel(alert.riskLevel)}</span>
+            <span className="text-xs font-semibold block text-on-surface-variant">
+              Score de Riesgo
+            </span>
+            <span className={`text-xl font-semibold ${riskVisuals.textClass}`}>
+              {riskVisuals.label}
+            </span>
           </div>
         </div>
       </section>
@@ -73,7 +110,10 @@ async function AlertContent({ id }: { id: string }) {
             </h2>
             <div className="grid grid-cols-1 gap-4">
               {alert.signals.map((signal) => (
-                <div key={signal.id} className="bg-surface-container-lowest border border-outline-variant p-6 flex justify-between items-center">
+                <div
+                  key={signal.id}
+                  className="bg-surface-container-lowest border border-outline-variant p-6 flex justify-between items-center"
+                >
                   <div>
                     <h3 className="text-xs font-semibold text-on-surface-variant mb-1 uppercase">
                       {signal.description}
@@ -87,7 +127,9 @@ async function AlertContent({ id }: { id: string }) {
                       ))}
                     </div>
                   </div>
-                  <span className="material-symbols-outlined filled text-destructive text-3xl">
+                  <span
+                    className={`material-symbols-outlined filled text-3xl ${riskVisuals.textClass}`}
+                  >
                     {signal.icon}
                   </span>
                 </div>
@@ -115,7 +157,9 @@ async function AlertContent({ id }: { id: string }) {
             </h2>
             <div className="mb-6">
               <p className="text-xl font-semibold mb-1">{alert.involvedSupplier.name}</p>
-              <p className="text-sm text-on-surface-variant">NIT: {alert.involvedSupplier.nit}</p>
+              <p className="text-sm text-on-surface-variant">
+                Identificador: {alert.involvedSupplier.nit}
+              </p>
             </div>
             <div className="mb-8">
               <span className="text-[11px] text-on-surface-variant block uppercase mb-1">
@@ -126,15 +170,28 @@ async function AlertContent({ id }: { id: string }) {
               </span>
             </div>
             <div className="flex flex-col gap-2">
-              <a
-                href="https://www.guatecompras.gt"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full border border-outline-variant bg-surface-container-lowest text-on-surface text-xs font-semibold py-2 px-4 flex justify-between items-center hover:bg-surface-container-low transition-colors"
-              >
-                Ver en Guatecompras
-                <span className="material-symbols-outlined text-lg">open_in_new</span>
-              </a>
+              {alert.guatecomprasUrl && (
+                <a
+                  href={alert.guatecomprasUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full border border-outline-variant bg-surface-container-lowest text-on-surface text-xs font-semibold py-2 px-4 flex justify-between items-center hover:bg-surface-container-low transition-colors"
+                >
+                  Ver contratos en Guatecompras
+                  <span className="material-symbols-outlined text-lg">open_in_new</span>
+                </a>
+              )}
+              {alert.registroMercantilUrl && (
+                <a
+                  href={alert.registroMercantilUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full border border-outline-variant bg-surface-container-lowest text-on-surface text-xs font-semibold py-2 px-4 flex justify-between items-center hover:bg-surface-container-low transition-colors"
+                >
+                  Buscar en Registro Mercantil
+                  <span className="material-symbols-outlined text-lg">open_in_new</span>
+                </a>
+              )}
               <Link
                 href={`/proveedores/${alert.involvedSupplier.id}`}
                 className="w-full border border-outline-variant bg-surface-container-lowest text-on-surface text-xs font-semibold py-2 px-4 flex justify-between items-center hover:bg-surface-container-low transition-colors"

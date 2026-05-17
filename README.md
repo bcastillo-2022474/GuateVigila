@@ -16,7 +16,7 @@ GuateVigila detecta cinco señales de riesgo sobre los datos de Guatecompras:
 4. **Gap adjudicación sin contrato** — entidades con ≥85% de adjudicaciones que nunca formalizan contrato
 5. **Tasa anómala de desiertos** — entidades donde ≥50% de concursos quedan desiertos o se cancelan (promedio nacional: ~26%)
 
-Cada combinación de señales genera una alerta con score de riesgo 0–100. Las alertas incluyen links directos a Guatecompras y al Registro Mercantil, y un borrador de contexto periodístico generado con IA.
+Cada combinación de señales genera una alerta con score de riesgo 0–100. Las alertas incluyen link al Registro Mercantil cuando el NIT es compatible y, solo cuando puede derivarse de forma confiable, un link directo a Guatecompras, además de un borrador de contexto periodístico generado con IA.
 
 ---
 
