@@ -1,7 +1,17 @@
 import type { Metadata } from 'next'
-import { SITE, META } from '@/lib/constants/site'
-import { Header } from '@/components/guatevigila/header'
 import Link from 'next/link'
+import { Header } from '@/components/guatevigila/header'
+import { Button } from '@/components/ui/button'
+import { SITE, META } from '@/lib/constants/site'
+import { 
+  AlertTriangle, 
+  Clock, 
+  FileText, 
+  FileX, 
+  XCircle, 
+  ArrowRight, 
+  ExternalLink 
+} from 'lucide-react'
 
 export const metadata: Metadata = {
   title: META.pages.faq.title,
@@ -16,7 +26,7 @@ export const metadata: Metadata = {
 
 const SIGNALS = [
   {
-    icon: 'person',
+    icon: AlertTriangle,
     title: 'Proveedor único recurrente',
     threshold: '≥ 60% de contratos sin competencia, en ≥ 5 contratos',
     national: '~40% de concursos tienen un solo oferente',
@@ -24,15 +34,15 @@ const SIGNALS = [
       'Cuando una empresa gana la mayoría de contratos con una entidad siendo el único oferente, el Estado no está comprando en competencia real. El umbral es 1.5× el promedio nacional.',
   },
   {
-    icon: 'timer_off',
-    title: 'Licitación de plazo imposible',
+    icon: Clock,
+    title: 'Licitación de plazo restrictivo',
     threshold: '≥ 3 procesos con ventana de oferta menor a 72 horas',
     national: 'Minoría documentada, no hay promedio oficial',
     description:
-      'Está documentado en Guatemala que se publican licitaciones con apenas 1 hora de plazo. Solo puede ganar quien ya sabía que iba a salir. GuateVigila detecta cuando esto ocurre de forma recurrente con el mismo proveedor.',
+      'Está documentado en Guatemala que se publican licitaciones con apenas 1 hora de plazo. Solo puede ganar quien ya sabía que iba a salir. GuateVigila detecta cuando esto ocurre de forma recurrente.',
   },
   {
-    icon: 'receipt_long',
+    icon: FileText,
     title: 'Abuso de compra directa',
     threshold: '≥ 70% de adjudicaciones por compra directa, en ≥ 20 contratos',
     national: '~31% del total de contrataciones son compra directa',
@@ -40,20 +50,20 @@ const SIGNALS = [
       'La compra directa tiene menos controles y no requiere competencia. Una entidad que compra directamente más del doble del promedio nacional tiene un patrón que merece explicación.',
   },
   {
-    icon: 'contract_delete',
+    icon: FileX,
     title: 'Gap adjudicación sin contrato',
     threshold: '≥ 85% de adjudicaciones que nunca formalizan contrato, en ≥ 20 awards',
     national: '94% a nivel nacional (anomalía sistémica del dataset)',
     description:
-      'En 2024, Guatemala registró cientos de miles de adjudicaciones pero solo una fracción formalizó contrato. Por entidad, quienes adjudican sistemáticamente sin llegar a contrato representan un riesgo adicional.',
+      'En 2024, Guatemala registró cientos de miles de adjudicaciones pero solo una fracción formalizó contrato. Quienes adjudican sistemáticamente sin llegar a contrato representan un riesgo adicional.',
   },
   {
-    icon: 'block',
+    icon: XCircle,
     title: 'Tasa anómala de desiertos',
     threshold: '≥ 50% de concursos desiertos o cancelados, en ≥ 20 concursos',
     national: '~26% combinado (desiertos + cancelados)',
     description:
-      'Un concurso desierto puede ser legítimo. Pero una entidad donde la mayoría de concursos quedan desiertos y luego compra directamente podría estar usando los concursos fallidos como pretexto para evitar licitación.',
+      'Un concurso desierto puede ser legítimo. Pero una entidad donde la mayoría de concursos quedan desiertos y luego compra directamente podría estar usando los concursos fallidos como pretexto.',
   },
 ]
 
@@ -83,98 +93,92 @@ const FAQS = [
 const faqJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: [
-    {
-      '@type': 'Question',
-      name: '¿Qué es una alerta en GuateVigila?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Una alerta se genera cuando un par (entidad compradora, proveedor) supera el umbral estadístico en al menos una de las cinco señales de detección. No es una acusación — es el punto de partida de una investigación periodística.' },
-    },
-    {
-      '@type': 'Question',
-      name: '¿De dónde vienen los datos?',
-      acceptedAnswer: { '@type': 'Answer', text: 'De Guatecompras, el sistema oficial de contrataciones públicas de Guatemala, publicados por el Ministerio de Finanzas en formato OCDS (Open Contracting Data Standard) bajo licencia CC BY 4.0.' },
-    },
-    {
-      '@type': 'Question',
-      name: '¿Qué es el score de riesgo?',
-      acceptedAnswer: { '@type': 'Answer', text: 'Un número de 0 a 100 que refleja cuántas señales de riesgo coinciden simultáneamente en un par (entidad, proveedor) y qué tan lejos están del umbral estadístico nacional.' },
-    },
-    {
-      '@type': 'Question',
-      name: '¿GuateVigila acusa a alguien de corrupción?',
-      acceptedAnswer: { '@type': 'Answer', text: 'No. GuateVigila detecta patrones estadísticos, no delitos. La interpretación y conclusiones son responsabilidad del periodista o investigador.' },
-    },
-    {
-      '@type': 'Question',
-      name: '¿Necesito cuenta para usar GuateVigila?',
-      acceptedAnswer: { '@type': 'Answer', text: 'No. Todo el contenido es público y accesible sin registro.' },
-    },
-  ],
+  mainEntity: FAQS.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: { '@type': 'Answer', text: faq.a },
+  })),
 }
 
 export default function FaqPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <Header />
 
-      <main className="max-w-[1200px] mx-auto px-4 md:px-16 py-12 pt-20">
-        {/* Header */}
+      <main className="max-w-4xl mx-auto px-4 md:px-8 py-16 pt-20">
+        
+        {/* Encabezado Principal */}
         <section className="mb-16">
-          <span className="text-xs font-semibold tracking-widest uppercase text-on-surface-variant block mb-3">
-            Metodología
-          </span>
-          <h1 className="text-5xl font-bold text-primary tracking-tight mb-4">
-            Preguntas frecuentes
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium mb-4">
+            Base de Conocimiento
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight mb-4 text-balance">
+            Preguntas Frecuentes
           </h1>
-          <p className="text-on-surface-variant max-w-2xl text-lg">
-            Cómo funciona GuateVigila, qué es una alerta y cómo interpretarla.
+          <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl">
+            Cómo funciona GuateVigila, qué significa estadísticamente una alerta y cómo interpretar los datos para una fiscalización ciudadana.
           </p>
         </section>
 
-        {/* What is an alert */}
+        {/* ¿Qué es una alerta? */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold text-on-surface mb-2">¿Qué es una alerta?</h2>
-          <div className="w-12 h-0.5 bg-primary mb-6" />
-          <div className="bg-surface-container-lowest border border-outline-variant p-8 max-w-3xl">
-            <p className="text-on-surface leading-relaxed mb-4">
+          <h2 className="text-2xl font-bold text-foreground mb-4">¿Qué es una alerta?</h2>
+          <div className="p-6 md:p-8 rounded-xl border border-border bg-card shadow-sm">
+            <p className="text-foreground leading-relaxed mb-4">
               Una alerta se genera cuando un par <strong>(entidad compradora, proveedor)</strong> supera
               el umbral estadístico en al menos una de las cinco señales de detección. El score de riesgo
               refleja cuántas señales coinciden simultáneamente.
             </p>
-            <p className="text-on-surface leading-relaxed mb-4">
+            <p className="text-foreground leading-relaxed mb-4">
               Los umbrales no son arbitrarios — se derivan de los promedios nacionales observados en el
               dataset OCDS de Guatemala 2020–2024. Un par que supera el umbral tiene un comportamiento
               que difiere significativamente de cómo opera el resto del Estado.
             </p>
-            <p className="text-on-surface-variant text-sm leading-relaxed">
-              Una alerta <strong>no es una acusación</strong>. Es el punto de partida de una investigación.
-            </p>
+            <div className="mt-6 p-4 rounded-lg bg-accent/10 border border-accent/20">
+              <p className="text-accent text-sm font-medium">
+                Una alerta <strong>no es una acusación de corrupción</strong>. Es únicamente el punto de partida técnico para una investigación periodística.
+              </p>
+            </div>
           </div>
         </section>
 
-        {/* Signals */}
+        {/* Las Señales */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold text-on-surface mb-2">Las cinco señales de detección</h2>
-          <div className="w-12 h-0.5 bg-primary mb-6" />
-          <div className="flex flex-col gap-4">
+          <h2 className="text-2xl font-bold text-foreground mb-6">Las cinco señales de detección</h2>
+          <div className="space-y-6">
             {SIGNALS.map((signal, i) => (
-              <div key={i} className="bg-surface-container-lowest border border-outline-variant p-6 flex gap-6">
-                <div className="shrink-0 w-10 h-10 bg-surface-container-high flex items-center justify-center">
-                  <span className="material-symbols-outlined text-on-surface-variant">{signal.icon}</span>
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-on-surface mb-1">{signal.title}</h3>
-                  <p className="text-on-surface-variant text-sm leading-relaxed mb-3">{signal.description}</p>
-                  <div className="flex flex-wrap gap-x-8 gap-y-1 text-xs">
-                    <span>
-                      <span className="font-semibold text-on-surface-variant uppercase tracking-wide">Umbral: </span>
-                      <span className="text-on-surface">{signal.threshold}</span>
-                    </span>
-                    <span>
-                      <span className="font-semibold text-on-surface-variant uppercase tracking-wide">Promedio nacional: </span>
-                      <span className="text-on-surface">{signal.national}</span>
-                    </span>
+              <div key={i} className="p-6 rounded-xl border border-border bg-card shadow-sm hover:border-accent/30 transition-colors">
+                <div className="flex flex-col sm:flex-row gap-5">
+                  <div className="shrink-0 w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center text-accent">
+                    <signal.icon className="h-6 w-6" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-lg font-bold text-foreground mb-2">{signal.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                      {signal.description}
+                    </p>
+                    
+                    <div className="bg-secondary/30 rounded-md p-4 border border-border/50">
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div>
+                          <span className="block text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+                            Umbral de Activación
+                          </span>
+                          <span className="text-sm font-medium text-foreground">
+                            {signal.threshold}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="block text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+                            Promedio Nacional
+                          </span>
+                          <span className="text-sm font-medium text-foreground">
+                            {signal.national}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -182,78 +186,78 @@ export default function FaqPage() {
           </div>
         </section>
 
-        {/* Score */}
+        {/* El Score de Riesgo */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold text-on-surface mb-2">Cómo se calcula el score de riesgo</h2>
-          <div className="w-12 h-0.5 bg-primary mb-6" />
-          <div className="bg-surface-container-lowest border border-outline-variant p-8 max-w-3xl">
-            <p className="text-on-surface leading-relaxed mb-6">
-              Cada señal tiene un peso base. El score final combina todas las señales activas,
-              amplificadas según qué tan lejos está cada valor del umbral (máximo 2×):
+          <h2 className="text-2xl font-bold text-foreground mb-4">Cálculo del Score de Riesgo</h2>
+          <div className="p-6 md:p-8 rounded-xl border border-border bg-card shadow-sm">
+            <p className="text-foreground leading-relaxed mb-6">
+              Cada señal tiene un peso base asignado. El score final combina todas las señales activas,
+              amplificadas según qué tan lejos está cada valor de su umbral:
             </p>
-            <div className="border border-outline-variant overflow-hidden mb-4">
+            
+            <div className="rounded-lg border border-border overflow-hidden mb-6">
               <table className="w-full text-sm text-left">
-                <thead className="bg-surface-container-low">
+                <thead className="bg-secondary">
                   <tr>
-                    <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase tracking-wide">Señal</th>
-                    <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase tracking-wide text-right">Peso base</th>
+                    <th className="px-5 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Identificador de Señal</th>
+                    <th className="px-5 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-right">Peso Base</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant">
+                <tbody className="divide-y divide-border">
                   {[
                     ['Proveedor único recurrente', '35 pts'],
-                    ['Licitación de plazo imposible', '25 pts'],
+                    ['Licitación de plazo restrictivo', '25 pts'],
                     ['Abuso de compra directa', '20 pts'],
                     ['Gap adjudicación sin contrato', '10 pts'],
                     ['Tasa anómala de desiertos', '10 pts'],
                   ].map(([name, pts]) => (
-                    <tr key={name}>
-                      <td className="px-4 py-3 text-on-surface">{name}</td>
-                      <td className="px-4 py-3 text-on-surface text-right font-mono">{pts}</td>
+                    <tr key={name} className="hover:bg-secondary/10 transition-colors">
+                      <td className="px-5 py-4 text-foreground font-medium">{name}</td>
+                      <td className="px-5 py-4 text-accent text-right font-mono font-bold">{pts}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="text-on-surface-variant text-sm">
-              Score máximo: 100. Un score de 80+ indica múltiples señales simultáneas con valores muy por encima del umbral.
+            <p className="text-muted-foreground text-sm">
+              <strong className="text-foreground">Score máximo: 100.</strong> Un score superior a 80 indica múltiples señales simultáneas activadas con valores muy por encima del umbral seguro.
             </p>
           </div>
         </section>
 
-        {/* General FAQs */}
+        {/* FAQs Adicionales */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold text-on-surface mb-2">Otras preguntas</h2>
-          <div className="w-12 h-0.5 bg-primary mb-6" />
-          <div className="flex flex-col gap-0 border border-outline-variant divide-y divide-outline-variant max-w-3xl">
+          <h2 className="text-2xl font-bold text-foreground mb-6">Preguntas Generales</h2>
+          <div className="border border-border rounded-xl bg-card divide-y divide-border overflow-hidden shadow-sm">
             {FAQS.map((faq, i) => (
-              <div key={i} className="p-6">
-                <p className="font-semibold text-on-surface mb-2">{faq.q}</p>
-                <p className="text-on-surface-variant text-sm leading-relaxed">{faq.a}</p>
+              <div key={i} className="p-6 md:p-8 hover:bg-secondary/5 transition-colors">
+                <h3 className="text-lg font-bold text-foreground mb-3">{faq.q}</h3>
+                <p className="text-muted-foreground leading-relaxed">{faq.a}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="flex flex-col sm:flex-row gap-4">
-          <Link
-            href="/"
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-          >
-            <span className="material-symbols-outlined text-base">notifications_active</span>
-            Ver alertas activas
-          </Link>
-          <a
-            href="https://datos.minfin.gob.gt/dataset/ocds-guatecompras"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 px-6 py-3 border border-outline-variant text-on-surface text-sm font-semibold hover:bg-surface-container-low transition-colors"
-          >
-            <span className="material-symbols-outlined text-base">north_east</span>
-            Datos fuente (MINFIN)
-          </a>
+        {/* CTA Section Final */}
+        <section className="flex flex-col sm:flex-row items-center gap-4 pt-8 border-t border-border">
+          <Button asChild size="lg" className="w-full sm:w-auto">
+            <Link href="/alertas">
+              <AlertTriangle className="mr-2 h-4 w-4" />
+              Ver panel de alertas activas
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            <a
+              href="https://datos.minfin.gob.gt/dataset"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Auditar datos fuente (MINFIN)
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </a>
+          </Button>
         </section>
+
       </main>
     </div>
   )

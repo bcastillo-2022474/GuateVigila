@@ -12,6 +12,7 @@ const navItems = [
   { href: '/entidades', label: 'Entidades' },
   { href: '/proveedores', label: 'Proveedores' },
   { href: '/faq', label: 'Metodología' },
+  { href: '/', label: 'Home' },
 ]
 
 interface HeaderProps {

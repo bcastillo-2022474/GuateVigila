@@ -9,7 +9,7 @@ import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { DraftSection } from '@/components/guatevigila/draft-section'
 import { AlertEvidenceGraph } from '@/components/guatevigila/alert-evidence-graph'
-
+import { DownloadReportButton } from '@/components/guatevigila/download-report-button'
 interface PageProps {
   params: Promise<{ id: string }>
 }
@@ -135,6 +135,7 @@ async function AlertContent({ id }: { id: string }) {
               {riskVisuals.label}
             </span>
           </div>
+          <DownloadReportButton alert={alert} />
         </div>
       </section>
 
