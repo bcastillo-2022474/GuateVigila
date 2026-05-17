@@ -55,7 +55,7 @@ async function AlertListLoader({
 function StatsBarSkeleton() {
   return (
     <div className="w-full bg-secondary/50 border-b border-border py-2.5">
-      <div className="max-w-[1200px] mx-auto px-4 md:px-16">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="h-4 w-96 bg-muted animate-pulse rounded-sm" />
       </div>
     </div>
@@ -68,7 +68,7 @@ function AlertListSkeleton() {
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={i}
-          className="h-32 bg-card border border-border animate-pulse rounded-lg"
+          className="h-32 bg-card border border-border animate-pulse rounded-xl"
         />
       ))}
     </div>
@@ -80,7 +80,7 @@ export default async function AlertQueuePage({ searchParams }: PageProps) {
   const page = Math.max(1, parseInt(pageParam, 10) || 1)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -94,7 +94,17 @@ export default async function AlertQueuePage({ searchParams }: PageProps) {
         <StatsBarLoader />
       </Suspense>
 
-      <main className="max-w-[1200px] mx-auto px-4 md:px-16 py-12">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+        {/* Encabezado homologado */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
+            Panel de Control de Alertas
+          </h1>
+          <p className="text-muted-foreground">
+            Monitoreo algorítmico automatizado de irregularidades y desviaciones estadísticas en tiempo real
+          </p>
+        </div>
+
         <Suspense fallback={<AlertListSkeleton />}>
           <AlertListLoader signal={signal} year={year} entity={entity} page={page} />
         </Suspense>

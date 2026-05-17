@@ -9,7 +9,6 @@ import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { EntityList } from '@/components/guatevigila/entity-list'
 import { Building2, FileText, AlertTriangle } from 'lucide-react'
 
-
 export const metadata: Metadata = {
   title: META.pages.entidades.title,
   description: META.pages.entidades.description,
@@ -63,38 +62,38 @@ async function EntidadesContent({
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-primary" />
+        <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Entidades Monitoreadas</p>
-              <p className="text-xl font-semibold text-foreground">{entitiesPage.total}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Entidades Monitoreadas</p>
+              <p className="text-2xl font-bold font-mono text-foreground mt-0.5">{entitiesPage.total}</p>
             </div>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-primary" />
+        <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              <FileText className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Adjudicaciones Analizadas</p>
-              <p className="text-xl font-semibold text-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Adjudicaciones Analizadas</p>
+              <p className="text-2xl font-bold font-mono text-foreground mt-0.5">
                 {entitiesPage.summary.totalContracts.toLocaleString()}
               </p>
             </div>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
+        <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive">
+              <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Alertas Activas</p>
-              <p className="text-xl font-semibold text-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wider text-destructive">Alertas Críticas Activas</p>
+              <p className="text-2xl font-bold font-mono text-destructive mt-0.5">
                 {entitiesPage.summary.totalAlerts}
               </p>
             </div>
@@ -121,11 +120,11 @@ function ContentSkeleton() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />
+          <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />
         ))}
       </div>
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
+        <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />
       ))}
     </div>
   )
@@ -133,9 +132,9 @@ function ContentSkeleton() {
 
 function StatsBarSkeleton() {
   return (
-    <div className="w-full bg-surface-container-low py-2 border-b border-outline-variant">
-      <div className="max-w-[1200px] mx-auto px-4 md:px-16">
-        <div className="h-[14px] w-96 bg-outline-variant/40 animate-pulse rounded-sm" />
+    <div className="w-full bg-secondary/50 border-b border-border py-2.5">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="h-4 w-96 bg-muted animate-pulse rounded-sm" />
       </div>
     </div>
   )
@@ -147,19 +146,19 @@ export default async function EntidadesPage({ searchParams }: PageProps) {
   const initialPage = Math.max(1, parseInt(page ?? '1', 10) || 1)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
       <Header />
       <Suspense fallback={<StatsBarSkeleton />}>
         <StatsBarLoader />
       </Suspense>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-12">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground mb-2">
-            Explorador de Entidades
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
+            Panel de Control Institucional
           </h1>
           <p className="text-muted-foreground">
-            Directorio de entidades gubernamentales bajo monitoreo de GuateVigila
+            Directorio consolidado de entidades estatales auditadas bajo variables relacionales de riesgo
           </p>
         </div>
 
