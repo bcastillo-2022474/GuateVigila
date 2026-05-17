@@ -3,15 +3,16 @@ import { client } from '@/lib/sdk/client'
 import { SITE } from '@/lib/constants/site'
 
 export const runtime = 'nodejs'
-export const alt = 'Alerta de riesgo — GuateVigila'
+export const alt = 'Alerta Pericial — GuateVigila'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
+// Pertenencia cromática de alta definición
 const RISK_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  critical: { bg: '#ba1a1a', text: '#ffffff', label: 'RIESGO CRÍTICO' },
-  high:     { bg: '#b84d00', text: '#ffffff', label: 'RIESGO ALTO' },
-  medium:   { bg: '#795548', text: '#ffffff', label: 'RIESGO MEDIO' },
-  low:      { bg: '#2e7d32', text: '#ffffff', label: 'RIESGO BAJO' },
+  critical: { bg: '#ef4444', text: '#ffffff', label: 'RIESGO CRÍTICO' },
+  high:     { bg: '#f97316', text: '#ffffff', label: 'RIESGO ALTO' },
+  medium:   { bg: '#f59e0b', text: '#ffffff', label: 'RIESGO MEDIO' },
+  low:      { bg: '#10b981', text: '#ffffff', label: 'RIESGO BAJO' },
 }
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
@@ -19,7 +20,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const alert = await client.getAlertById(id)
 
   const risk = RISK_COLORS[alert?.riskLevel ?? 'low']
-  const entityName = alert?.entityName ?? 'Entidad desconocida'
+  const entityName = alert?.entityName ?? 'Entidad Gubernamental'
   const supplierName = alert?.involvedSupplier?.name ?? ''
   const riskScore = alert?.riskScore ?? 0
   const signalCount = alert?.signals?.length ?? 0
@@ -32,96 +33,104 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           height: 630,
           display: 'flex',
           flexDirection: 'column',
-          background: '#111315',
+          background: '#09090b', // Fondo zinc-950 OSINT
           fontFamily: 'sans-serif',
           position: 'relative',
         }}
       >
-        {/* Top accent bar */}
-        <div style={{ width: '100%', height: 6, background: risk.bg, display: 'flex' }} />
+        {/* Barra superior de acento dinámico según riesgo */}
+        <div style={{ width: '100%', height: 8, background: risk.bg, display: 'flex' }} />
 
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '48px 64px' }}>
-          {/* Header row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '56px 72px' }}>
+          
+          {/* Fila del encabezado */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 48 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              {/* Logo text */}
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#e3e2e6', letterSpacing: '-0.5px' }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.5px' }}>
                 GuateVigila
               </div>
+              <div style={{ fontSize: 22, color: '#3f3f46', paddingBottom: 2 }}>/</div>
+              <div style={{ fontSize: 22, fontWeight: 600, color: '#a1a1aa' }}>Dictamen de Alerta</div>
             </div>
             <div style={{
               background: risk.bg,
               color: risk.text,
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 800,
-              letterSpacing: '0.12em',
-              padding: '6px 16px',
+              letterSpacing: '0.15em',
+              padding: '8px 20px',
+              borderRadius: 6,
               display: 'flex',
             }}>
               {risk.label}
             </div>
           </div>
 
-          {/* Entity name */}
+          {/* Nombre de la entidad pública */}
           <div style={{
-            fontSize: entityName.length > 50 ? 36 : 44,
+            fontSize: entityName.length > 50 ? 38 : 48,
             fontWeight: 800,
-            color: '#e3e2e6',
+            color: '#ffffff',
             lineHeight: 1.15,
             marginBottom: 16,
-            maxWidth: 900,
+            maxWidth: 1000,
           }}>
             {entityName}
           </div>
 
-          {/* Supplier */}
+          {/* Contratista implicado */}
           {supplierName && (
-            <div style={{ fontSize: 22, color: '#8e9199', marginBottom: 40 }}>
-              Proveedor: {supplierName}
+            <div style={{ fontSize: 24, color: '#a1a1aa', fontWeight: 500, marginBottom: 40 }}>
+              Contratista Relacionado: <span style={{ color: '#e4e4e7', fontWeight: 700 }}>{supplierName}</span>
             </div>
           )}
 
-          {/* Stats row */}
-          <div style={{ display: 'flex', gap: 32, marginTop: 'auto' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div style={{ fontSize: 13, color: '#8e9199', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          {/* Panel de estadísticas métricas */}
+          <div style={{ display: 'flex', gap: 64, marginTop: 'auto', background: '#18181b', padding: '28px 48px', borderRadius: 16, border: '1px solid #27272a' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 13, color: '#a1a1aa', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
                 Score de Riesgo
               </div>
               <div style={{ fontSize: 48, fontWeight: 800, color: risk.bg, lineHeight: 1 }}>
-                {riskScore}<span style={{ fontSize: 20, color: '#8e9199' }}>/100</span>
+                {riskScore}<span style={{ fontSize: 22, color: '#71717a', fontWeight: 400 }}>/100</span>
               </div>
             </div>
-            <div style={{ width: 1, background: '#2a2d30', display: 'flex' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div style={{ fontSize: 13, color: '#8e9199', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            
+            <div style={{ width: 1, background: '#27272a', display: 'flex' }} />
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 13, color: '#a1a1aa', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
                 Señales Activas
               </div>
-              <div style={{ fontSize: 48, fontWeight: 800, color: '#e3e2e6', lineHeight: 1 }}>
+              <div style={{ fontSize: 48, fontWeight: 800, color: '#ffffff', lineHeight: 1 }}>
                 {signalCount}
               </div>
             </div>
-            <div style={{ width: 1, background: '#2a2d30', display: 'flex' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div style={{ fontSize: 13, color: '#8e9199', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Fuente
+            
+            <div style={{ width: 1, background: '#27272a', display: 'flex' }} />
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 13, color: '#a1a1aa', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+                Procedencia
               </div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#e3e2e6', lineHeight: 1, marginTop: 8 }}>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#ffffff', lineHeight: 1, marginTop: 10 }}>
                 Guatecompras OCDS
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom bar */}
+        {/* Barra de cierre institucional */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 64px',
-          borderTop: '1px solid #2a2d30',
+          padding: '20px 72px',
+          borderTop: '1px solid #27272a',
+          background: '#0c0c0e',
         }}>
-          <div style={{ fontSize: 14, color: '#8e9199' }}>{SITE.url}</div>
-          <div style={{ fontSize: 14, color: '#8e9199' }}>Monitoreo de Contrataciones Públicas · Guatemala</div>
+          <div style={{ fontSize: 14, color: '#71717a', fontFamily: 'monospace' }}>{SITE.url}</div>
+          <div style={{ fontSize: 14, color: '#71717a', fontWeight: 500 }}>Monitoreo e Inferencia de Contrataciones Públicas</div>
         </div>
       </div>
     ),
