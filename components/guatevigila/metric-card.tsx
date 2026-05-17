@@ -16,7 +16,7 @@ export function MetricCard({
   const valueColorClass =
     variant === 'success' ? 'text-secondary' :
     variant === 'warning' ? 'text-tertiary' :
-    variant === 'danger' ? 'text-error' :
+    variant === 'danger' ? 'text-destructive' :
     'text-primary'
 
   return (
@@ -29,7 +29,7 @@ export function MetricCard({
         {icon && (
           <span
             className={`material-symbols-outlined filled ${
-              variant === 'danger' ? 'text-on-tertiary-fixed-variant' : ''
+              variant === 'danger' ? 'text-destructive' : ''
             }`}
           >
             {icon}

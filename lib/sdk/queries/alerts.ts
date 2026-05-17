@@ -3,6 +3,7 @@ import {
   buildRegistroMercantilUrl,
   getSupplierDisplayIdentifier,
 } from '../supplier-identity'
+import { supplierUrl } from '@/lib/guatecompras/urls'
 import type {
   Alert,
   AlertListFilters,
@@ -64,6 +65,8 @@ type EntitySignalType = 'direct_purchase' | 'award_gap' | 'failed_tenders'
 
 interface AlertQueryFilters {
   buyerId?: string
+  entity?: string  // buyer_name ILIKE search
+  year?: string    // filter on latestYear (MAX of tender start year)
 }
 
 interface PairSummaryRow {
@@ -215,6 +218,9 @@ function buildWhere(baseClauses: string[], filters: AlertQueryFilters): string {
   const clauses = [...baseClauses]
   if (filters.buyerId) {
     clauses.push(`m.buyer_id = ${escapeSqlLiteral(filters.buyerId)}`)
+  }
+  if (filters.entity) {
+    clauses.push(`m.buyer_name ILIKE ${escapeSqlLiteral(`%${filters.entity}%`)}`)
   }
   return `WHERE ${clauses.join('\n  AND ')}`
 }
@@ -445,6 +451,9 @@ function compareAlerts(a: MaterializedAlert, b: MaterializedAlert): number {
 async function runPairSummaryQuery(
   filters: AlertQueryFilters
 ): Promise<PairSummary[]> {
+  const yearHaving = filters.year
+    ? `HAVING MAX(EXTRACT(year FROM m."tender_tenderPeriod_startDate")) = ${parseInt(filters.year, 10)}`
+    : ''
   const rows = await query<PairSummaryRow>(`
     SELECT
       m.buyer_id                                                   AS buyer_id,
@@ -468,6 +477,7 @@ async function runPairSummaryQuery(
       filters
     )}
     GROUP BY m.buyer_id, m.buyer_name, s.id, s.name
+    ${yearHaving}
   `)
 
   return normalizePairSummaryRows(rows)
@@ -972,18 +982,17 @@ export async function getAlerts(): Promise<Alert[]> {
 export async function getAlertsPage(
   filters: AlertListFilters = {}
 ): Promise<PaginatedAlerts> {
-  const snapshot = await getCachedAlertSnapshot()
-  const filteredAlerts = snapshot.alerts.filter((alert) => {
-    if (filters.signal && alert.signalKey !== filters.signal) return false
-    if (filters.year && alert.year !== filters.year) return false
-    if (
-      filters.entity &&
-      !alert.entityName.toLowerCase().includes(filters.entity.toLowerCase())
-    ) {
-      return false
-    }
-    return true
-  })
+  const queryFilters: AlertQueryFilters = {
+    entity: filters.entity || undefined,
+    year: filters.year || undefined,
+  }
+  const snapshot = await buildAlertSnapshot(queryFilters)
+
+  // Signal type is derived post-materialization so it can't be pushed to SQL
+  const filteredAlerts = filters.signal
+    ? snapshot.alerts.filter((alert) => alert.signalKey === filters.signal)
+    : snapshot.alerts
+
   const pageSize = Math.max(1, filters.pageSize ?? ALERTS_PAGE_SIZE)
   const total = filteredAlerts.length
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
@@ -1027,6 +1036,7 @@ export async function getAlertById(id: string): Promise<AlertDetail | null> {
       year: materializedAlert.involvedSupplierYear,
     },
     draftInvestigation: '',
+    guatecomprasUrl: supplierUrl(materializedAlert.supplierNit),
     registroMercantilUrl: buildRegistroMercantilUrl(materializedAlert.supplierId),
   }
 }

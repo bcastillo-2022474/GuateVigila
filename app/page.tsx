@@ -111,24 +111,19 @@ export default async function AlertQueuePage({ searchParams }: PageProps) {
 
           <div className="flex gap-6">
             <a
-              href="#"
+              href="/faq"
               className="text-[11px] tracking-widest uppercase hover:text-primary"
             >
               Metodología
             </a>
 
             <a
-              href="#"
+              href="https://datos.minfin.gob.gt/dataset/ocds-guatecompras"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-[11px] tracking-widest uppercase hover:text-primary"
             >
               Datos Abiertos
-            </a>
-
-            <a
-              href="#"
-              className="text-[11px] tracking-widest uppercase hover:text-primary"
-            >
-              Contacto
             </a>
           </div>
         </div>

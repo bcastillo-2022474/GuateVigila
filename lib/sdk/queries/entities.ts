@@ -152,7 +152,7 @@ export const getEntitiesPage = getEntities
 export async function getEntityById(id: string): Promise<Entity | null> {
   const escapedId = id.replace(/'/g, "''")
   const nameRows = await query<{ buyer_id: string; buyer_name: string }>(`
-    SELECT DISTINCT buyer_id, buyer_name
+    SELECT buyer_id, buyer_name
     FROM main
     WHERE buyer_id = '${escapedId}'
        OR buyer_name = '${escapedId}'
@@ -250,7 +250,7 @@ export async function getEntitySuppliers(
     : ''
 
   const nameRows = await query<{ buyer_id: string; buyer_name: string }>(`
-    SELECT DISTINCT buyer_id, buyer_name
+    SELECT buyer_id, buyer_name
     FROM main
     WHERE buyer_id = '${safeId}' OR buyer_name = '${safeId}'
     ORDER BY CASE WHEN buyer_id = '${safeId}' THEN 0 ELSE 1 END, buyer_name

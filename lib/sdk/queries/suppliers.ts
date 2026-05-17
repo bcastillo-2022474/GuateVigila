@@ -1,6 +1,7 @@
 import type { Associate, PaginatedAssociates, PaginatedSupplierContracts, PaginatedSupplierList, RiskLevel, Supplier, SupplierContractsFilters, SupplierFilters, SupplierListItem } from '../types'
 import { query } from '@/lib/db/index'
 import { buildRegistroMercantilUrl } from '../supplier-identity'
+import { getSupplierAlertsBySupplierId } from './alerts'
 
 const PAGE_SIZE_LIST = 20
 const PAGE_SIZE = 15
@@ -110,7 +111,7 @@ export async function getSuppliers(filters: SupplierFilters = {}): Promise<Pagin
 export async function getSupplierById(id: string): Promise<Supplier | null> {
   const safeId = id.replace(/'/g, "''")
 
-  const [summaryRows, yearlyRows] = await Promise.all([
+  const [summaryRows, yearlyRows, supplierAlerts] = await Promise.all([
     query<{
       ocds_id: string
       supplier_name: string
@@ -148,6 +149,8 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
       GROUP BY 1
       ORDER BY 1
     `),
+
+    getSupplierAlertsBySupplierId(id),
   ])
 
   const summary = summaryRows[0]
@@ -177,7 +180,7 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
       : 0,
     period: `${periodStart}–${periodEnd}`,
     yearlyData: years,
-    alerts: [],
+    alerts: supplierAlerts,
     registroMercantilUrl: buildRegistroMercantilUrl(ocdsId),
   }
 }
