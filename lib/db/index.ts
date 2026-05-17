@@ -3,6 +3,8 @@
 // - OCDS_DATA_DIR set → DuckDB (local CSVs, for development)
 // Both adapters expose the same query<T>(sql) interface.
 
+import { unstable_cache } from 'next/cache'
+
 export type QueryFn = <T = Record<string, unknown>>(sql: string) => Promise<T[]>
 
 let _query: QueryFn | null = null
@@ -25,7 +27,18 @@ async function getAdapter(): Promise<QueryFn> {
   return _query
 }
 
-export async function query<T = Record<string, unknown>>(sql: string): Promise<T[]> {
+async function rawQuery<T = Record<string, unknown>>(sql: string): Promise<T[]> {
   const fn = await getAdapter()
   return fn<T>(sql)
+}
+
+// Cache all DB queries for 1 hour. The SQL string is the cache key, so
+// different queries (different filters/pages) get independent cache entries.
+// Tag 'db' allows on-demand invalidation via revalidateTag('db').
+export async function query<T = Record<string, unknown>>(sql: string): Promise<T[]> {
+  return unstable_cache(
+    () => rawQuery<T>(sql),
+    [sql],
+    { tags: ['db'], revalidate: 3600 },
+  )()
 }

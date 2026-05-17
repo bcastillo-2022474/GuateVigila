@@ -12,7 +12,6 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 
-export const revalidate = 3600
 
 interface PageProps {
   searchParams: Promise<{ q?: string; page?: string }>
