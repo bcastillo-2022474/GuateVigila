@@ -36,18 +36,18 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
 
   return (
     <>
-      <header className="bg-surface border-b border-outline-variant sticky top-0 z-40 h-16 w-full">
+      <header className="bg-primary border-b border-outline-variant sticky top-0 z-40 h-16 w-full">
         <div className="flex items-center justify-between px-4 md:px-16 w-full max-w-[1200px] mx-auto h-full">
 
           <div className="flex items-center gap-3 md:gap-4">
             {showBackButton && (
-              <Link href={backHref} className="hover:bg-surface-container-low p-1 rounded-sm transition-colors">
-                <span className="material-symbols-outlined text-on-surface">arrow_back</span>
+              <Link href={backHref} className="hover:bg-primary/10 p-1 rounded-sm transition-colors">
+                <span className="material-symbols-outlined text-primary-foreground">arrow_back</span>
               </Link>
             )}
             <Link href="/" className="flex items-center gap-2">
               <Image src="/guate-vigila-black.svg" alt="GuateVigila" width={28} height={28} priority />
-              <span className="text-2xl font-bold tracking-tight text-on-surface">GuateVigila</span>
+              <span className="text-2xl font-bold tracking-tight text-primary-foreground">GuateVigila</span>
             </Link>
           </div>
 
@@ -64,8 +64,8 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
                   href={item.href}
                   className={`text-xs font-semibold tracking-wide uppercase transition-colors ${
                     isActive
-                      ? 'text-primary border-b-2 border-primary pb-1'
-                      : 'text-on-surface-variant hover:bg-surface-container-low px-2 py-1'
+                      ? 'text-primary-foreground border-b-2 border-primary-foreground pb-1'
+                          : 'text-primary-foreground/90 hover:bg-primary/10 px-2 py-1'
                   }`}
                 >
                   {item.label}
@@ -76,18 +76,18 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
 
           <div className="flex items-center gap-1 md:hidden">
             <button
-              className="p-2 rounded-sm hover:bg-surface-container-low transition-colors"
+              className="p-2 rounded-sm hover:bg-primary/10 transition-colors"
               onClick={() => setSearchOpen(true)}
               aria-label="Buscar"
             >
-              <span className="material-symbols-outlined text-on-surface">search</span>
+              <span className="material-symbols-outlined text-primary-foreground">search</span>
             </button>
             <button
-              className="p-2 rounded-sm hover:bg-surface-container-low transition-colors"
+              className="p-2 rounded-sm hover:bg-primary/10 transition-colors"
               onClick={() => setMenuOpen((o) => !o)}
               aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
             >
-              <span className="material-symbols-outlined text-on-surface">
+              <span className="material-symbols-outlined text-primary-foreground">
                 {menuOpen ? 'close' : 'menu'}
               </span>
             </button>
@@ -102,17 +102,17 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
         <div className="fixed inset-0 z-50 bg-black/40 md:hidden" onClick={() => setMenuOpen(false)} />
       )}
 
-      <div className={`fixed top-0 right-0 z-50 h-full w-72 bg-surface border-l border-outline-variant flex flex-col transition-transform duration-300 ease-in-out md:hidden ${
+      <div className={`fixed top-0 right-0 z-50 h-full w-72 bg-surface-container border-l border-outline-variant flex flex-col transition-transform duration-300 ease-in-out md:hidden ${
         menuOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         <div className="flex items-center justify-between px-6 h-16 border-b border-outline-variant">
-          <span className="text-sm font-semibold text-on-surface">Navegación</span>
+          <span className="text-sm font-semibold text-primary-foreground">Navegación</span>
           <button
             onClick={() => setMenuOpen(false)}
-            className="p-1 rounded-sm hover:bg-surface-container-low transition-colors"
+            className="p-1 rounded-sm hover:bg-primary/10 transition-colors"
             aria-label="Cerrar menú"
           >
-            <span className="material-symbols-outlined text-on-surface">close</span>
+            <span className="material-symbols-outlined text-primary-foreground">close</span>
           </button>
         </div>
 
@@ -125,8 +125,8 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-3 rounded-sm text-sm font-semibold tracking-wide uppercase transition-colors ${
                   isActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+                    ? 'bg-primary/10 text-primary-foreground'
+                    : 'text-primary-foreground/90 hover:bg-primary/10 hover:text-primary-foreground'
                 }`}
               >
                 {item.label}
