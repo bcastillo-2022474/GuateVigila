@@ -25,6 +25,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
+type MetricVariant = 'default' | 'warning' | 'danger'
+
+function singleBidderConfig(pct: number): { subtitle: string; variant: MetricVariant } {
+  const tiers: { threshold: number; subtitle: string; variant: MetricVariant }[] = [
+    { threshold: 80, subtitle: 'Riesgo de competencia crítico', variant: 'danger' },
+    { threshold: 60, subtitle: 'Riesgo de competencia alto',   variant: 'danger' },
+    { threshold: 40, subtitle: 'Riesgo de competencia medio',  variant: 'warning' },
+    { threshold: 0,  subtitle: 'Riesgo de competencia bajo',   variant: 'default' },
+  ]
+  return tiers.find((t) => pct >= t.threshold)!
+}
+
 function formatAmount(amount: number, currency: string) {
   if (amount >= 1_000_000) return `${currency} ${(amount / 1_000_000).toFixed(1)}M`
   return `${currency} ${amount.toLocaleString('es-GT')}`
@@ -90,7 +102,11 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
         <MetricCard label="Total Contratos" value={supplier.totalContracts} subtitle={`Periodo ${supplier.period}`} />
         <MetricCard label="Monto Adjudicado" value={formatAmount(supplier.totalAwarded, supplier.currency)} subtitle="Cifras en Quetzales" variant="success" />
         <MetricCard label="Entidades Clientes" value={supplier.clientEntities} subtitle="Diversificación de cartera" />
-        <MetricCard label="Oferente Único" value={`${supplier.singleBidderPercentage}%`} subtitle="Riesgo de competencia bajo" variant="danger" />
+        <MetricCard
+          label="Oferente Único"
+          value={`${supplier.singleBidderPercentage}%`}
+          {...singleBidderConfig(supplier.singleBidderPercentage)}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-20 items-start">
