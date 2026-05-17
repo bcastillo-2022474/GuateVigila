@@ -127,9 +127,8 @@ export function SupplierList({
       </div>
 
       <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <div className="hidden md:grid grid-cols-10 gap-4 px-4 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
           <div className="col-span-3">Proveedor</div>
-          <div className="col-span-2">Industria</div>
           <div className="col-span-2 text-right">Adjudicado</div>
           <div className="col-span-1 text-center">Contratos</div>
           <div className="col-span-2 text-center">Oferta Única</div>
@@ -147,7 +146,7 @@ export function SupplierList({
               <Link
                 key={supplier.id}
                 href={`/proveedores/${supplier.id}`}
-                className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center"
+                className="grid grid-cols-1 md:grid-cols-10 gap-2 md:gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center"
               >
                 <div className="col-span-1 md:col-span-3">
                   <div className="flex items-center gap-3">
@@ -161,10 +160,6 @@ export function SupplierList({
                       </p>
                     </div>
                   </div>
-                </div>
-                <div className="col-span-1 md:col-span-2 text-sm text-muted-foreground md:text-foreground">
-                  <span className="md:hidden text-muted-foreground">Industria: </span>
-                  {supplier.industry}
                 </div>
                 <div className="col-span-1 md:col-span-2 text-sm md:text-right">
                   <span className="md:hidden text-muted-foreground">Adjudicado: </span>

@@ -13,8 +13,9 @@ export const client: GuateVigilaSDK = {
   getEntityById: entities.getEntityById,
   getEntitySuppliers: entities.getEntitySuppliers,
   getSuppliers: suppliers.getSuppliers,
-  getSuppliersPage: suppliers.getSuppliersPage,
+  getSuppliersPage: suppliers.getSuppliers,
   getSupplierById: suppliers.getSupplierById,
   getSupplierContracts: suppliers.getSupplierContracts,
+  getSupplierAssociates: suppliers.getSupplierAssociates,
   getGlobalStats: stats.getGlobalStats,
 }

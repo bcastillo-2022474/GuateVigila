@@ -2,7 +2,7 @@ interface MetricCardProps {
   label: string
   value: string | number
   subtitle?: string
-  variant?: 'default' | 'success' | 'danger'
+  variant?: 'default' | 'success' | 'warning' | 'danger'
   icon?: string
 }
 
@@ -14,11 +14,10 @@ export function MetricCard({
   icon,
 }: MetricCardProps) {
   const valueColorClass =
-    variant === 'success'
-      ? 'text-secondary'
-      : variant === 'danger'
-        ? 'text-on-tertiary-container'
-        : 'text-primary'
+    variant === 'success' ? 'text-secondary' :
+    variant === 'warning' ? 'text-tertiary' :
+    variant === 'danger' ? 'text-error' :
+    'text-primary'
 
   return (
     <div className="bg-surface-container-lowest border border-outline-variant p-6 flex flex-col justify-between h-32">

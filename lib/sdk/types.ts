@@ -104,9 +104,7 @@ export interface SupplierContract {
 export interface Supplier {
   id: string
   name: string
-  // Kept for compatibility; in practice this is the supplier identifier shown in the UI.
   nit: string
-  industry: string
   totalContracts: number
   totalAwarded: number
   currency: string
@@ -119,7 +117,6 @@ export interface Supplier {
     contractCount: number
   }[]
   alerts: SupplierAlert[]
-  associates: Associate[]
   registroMercantilUrl?: string
 }
 
@@ -157,9 +154,15 @@ export interface SupplierAlert {
 export interface Associate {
   id: string
   name: string
-  role: string
-  participation: string
-  otherCompanies: number
+  sharedTenders: number
+}
+
+export interface PaginatedAssociates {
+  associates: Associate[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 export interface GlobalStats {
@@ -174,29 +177,21 @@ export interface GlobalStats {
 export type EntityType = 'ministerio' | 'municipalidad' | 'instituto' | 'secretaria'
 
 export interface EntityFilters {
+  q?: string
   type?: EntityType[]
-}
-
-export interface AlertListFilters {
-  signal?: string
-  year?: string
-  entity?: string
   page?: number
-  pageSize?: number
 }
 
-export interface PaginatedAlerts {
-  alerts: Alert[]
+export interface PaginatedEntityList {
+  entities: EntityListItem[]
   total: number
   page: number
   pageSize: number
   totalPages: number
-}
-
-export interface EntityListFilters extends EntityFilters {
-  q?: string
-  page?: number
-  pageSize?: number
+  summary: {
+    totalContracts: number
+    totalAlerts: number
+  }
 }
 
 // Entity List Item (for explorer view)
@@ -212,36 +207,10 @@ export interface EntityListItem {
   riskLevel: RiskLevel
 }
 
-export interface PaginatedEntities {
-  entities: EntityListItem[]
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-  summary: {
-    totalContracts: number
-    totalAlerts: number
-  }
-}
-
-export interface SupplierListFilters {
+export interface SupplierFilters {
   q?: string
   page?: number
   pageSize?: number
-}
-
-// Supplier List Item (for explorer view)
-export interface SupplierListItem {
-  id: string
-  name: string
-  nit: string
-  industry: string
-  totalContracts: number
-  totalAwarded: number
-  currency: string
-  clientEntities: number
-  riskLevel: RiskLevel
-  singleBidderPercentage: number
 }
 
 export interface PaginatedSupplierList {
@@ -256,25 +225,58 @@ export interface PaginatedSupplierList {
   }
 }
 
+// Supplier List Item (for explorer view)
+export interface SupplierListItem {
+  id: string
+  name: string
+  nit: string
+  totalContracts: number
+  totalAwarded: number
+  currency: string
+  clientEntities: number
+  riskLevel: RiskLevel
+  singleBidderPercentage: number
+}
+
+export interface AlertFilters {
+  signal?: string
+  year?: string
+  entity?: string
+  page?: number
+  pageSize?: number
+}
+
+// Alias used by alerts.ts
+export type AlertListFilters = AlertFilters
+
+export interface PaginatedAlerts {
+  alerts: Alert[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
 // SDK Client Interface
 export interface GuateVigilaSDK {
   // Alerts
   getAlerts(): Promise<Alert[]>
-  getAlertsPage(filters?: AlertListFilters): Promise<PaginatedAlerts>
+  getAlertsPage(filters?: AlertFilters): Promise<PaginatedAlerts>
   getAlertById(id: string): Promise<AlertDetail | null>
-  
+
   // Entities
-  getEntities(filters?: EntityFilters): Promise<EntityListItem[]>
-  getEntitiesPage(filters?: EntityListFilters): Promise<PaginatedEntities>
+  getEntities(filters?: EntityFilters): Promise<PaginatedEntityList>
+  getEntitiesPage(filters?: EntityFilters): Promise<PaginatedEntityList>
   getEntityById(id: string): Promise<Entity | null>
   getEntitySuppliers(id: string, filters?: EntitySuppliersFilters): Promise<PaginatedSuppliers>
-  
+
   // Suppliers
-  getSuppliers(): Promise<SupplierListItem[]>
-  getSuppliersPage(filters?: SupplierListFilters): Promise<PaginatedSupplierList>
+  getSuppliers(filters?: SupplierFilters): Promise<PaginatedSupplierList>
+  getSuppliersPage(filters?: SupplierFilters): Promise<PaginatedSupplierList>
   getSupplierById(id: string): Promise<Supplier | null>
   getSupplierContracts(id: string, filters?: SupplierContractsFilters): Promise<PaginatedSupplierContracts>
-  
+  getSupplierAssociates(id: string, page?: number): Promise<PaginatedAssociates>
+
   // Stats
   getGlobalStats(): Promise<GlobalStats>
 }
