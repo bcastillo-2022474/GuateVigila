@@ -96,39 +96,83 @@ Eso vale más que cualquier demo técnica.
 ### ✅ Factible ahora mismo
 
 **1. OFAC Sanctions List (USA)**
-- 49 guatemaltecos en la lista SDN de OFAC — narcotráfico, lavado, corrupción
-- Lista descargable en XML/CSV sin autenticación: `sanctionssearch.ofac.treas.gov`
-- OFAC también tiene API pública
-- Cruce: nombre del proveedor vs. lista SDN → si aparece, alerta inmediata
-- Impacto en demo: *"este proveedor recibió Q50M del Estado y está en la lista negra del Tesoro de EE.UU."* — eso es noticia y gana el track
+
+49 guatemaltecos en la lista SDN — narcotráfico, lavado de dinero, corrupción. La lista se actualiza continuamente y es descarga directa sin autenticación.
+
+Cómo obtener los datos:
+- XML completo: `https://www.treasury.gov/ofac/downloads/sdn.xml`
+- CSV delimitado: `https://www.treasury.gov/ofac/downloads/sdn.csv`
+- Se puede descargar en el build o con un cron job diario
+
+Qué contiene:
+- Nombre completo + aliases
+- Tipo de entidad (individual / empresa)
+- País
+- Fecha de designación
+- Motivo (narco, corrupción, terrorismo, etc.)
+
+Cómo hacer el cruce:
+1. Descargar el CSV al momento del deploy y cargarlo a una tabla `ofac_sdn` en Neon
+2. Fuzzy match por nombre entre `supplier_name` en `alert_pairs` y `sdn.name` (pg_trgm ya instalado)
+3. Nueva columna `is_sanctioned` en el perfil del proveedor
+4. Nueva señal de alerta: proveedor sancionado recibiendo contratos del Estado
+
+Impacto en demo: *"este proveedor recibió Q50M del Estado y está en la lista negra del Tesoro de EE.UU."* — eso es noticia inmediata y gana el track.
+
+---
 
 **2. MINFIN — Ejecución Presupuestaria (SICOIN)**
-- `datos.minfin.gob.gt` publica CSVs de ejecución presupuestaria por año, entidad y línea
-- Descarga directa, sin autenticación
-- Cruce: lo que una entidad contrató en Guatecompras vs. lo que ejecutó en SICOIN
-- Si contrató más de lo presupuestado → señal de manipulación presupuestaria
-- Nuevo tipo de alerta que ningún otro sistema en Guatemala hace
+
+El Ministerio de Finanzas publica la ejecución presupuestaria de todas las entidades del Estado por año, en CSV descargable sin autenticación.
+
+Cómo obtener los datos:
+- Portal: `https://datos.minfin.gob.gt/dataset/ejecucion-presupuestaria-2024`
+- Descarga directa CSV disponible en ese portal (sin login)
+- Hay datos desde 2019 hasta 2025
+
+Qué contiene el CSV:
+- `entidad` — nombre de la unidad ejecutora
+- `aprobado_inicial` — presupuesto aprobado al inicio del año
+- `modificacion` — modificaciones presupuestarias durante el año
+- `vigente` — presupuesto disponible actualizado
+- `devengado` — monto realmente ejecutado/gastado
+
+Cómo hacer el cruce:
+1. Descargar los CSVs y cargarlos a una tabla `budget_execution` en Neon
+2. Join por nombre de entidad con `buyer_name` en `alert_pairs` (fuzzy con pg_trgm)
+3. Calcular: `devengado_contratos` (de Guatecompras) vs `devengado_sicoin` (de MINFIN)
+4. Si los contratos adjudicados superan el presupuesto ejecutado → señal de sobreeje­cución sospechosa
+
+Nueva alerta que ningún otro sistema en Guatemala hace hoy.
+
+---
 
 ### ⚠️ Difícil / bloqueado
 
 **3. Registro Mercantil**
-- OpenCorporates tiene Guatemala pero score 0/100 de apertura — sin directores, sin socios, sin API
-- Portal oficial requiere búsqueda manual, sin descarga masiva
-- **Conclusión:** no factible en un hackathon
+- OpenCorporates tiene Guatemala indexado pero score 0/100 de apertura — sin directores, sin socios, sin API real
+- El portal oficial (`registromercantil.gob.gt`) requiere búsqueda manual por nombre, no hay descarga masiva ni API
+- Hay un dataset en `catalogo.senacyt.gob.gt` pero el SSL está roto y no carga
+- **Conclusión:** no factible técnicamente en un hackathon
 
 **4. Declaraciones patrimoniales (CGC)**
 - La ley las declara confidenciales (Art. 21, Ley de Probidad)
-- Solo se publican voluntariamente por algunos funcionarios
+- Solo algunos funcionarios las publican voluntariamente
 - No hay dataset descargable
 - **Conclusión:** bloqueado legalmente
+
+---
 
 ### 💡 Sin dataset externo — puro SQL sobre lo que ya tenemos
 
 **5. Detección de empresas relacionadas**
-- Proveedores distintos que comparten patrones de NIT (mismo propietario disfrazado)
-- Proveedor que gana en una entidad y simultáneamente tiene contratos con 10+ entidades más
-- Señal clásica de fraccionamiento y empresas fantasma
-- Costo: 0 — solo SQL sobre la DB actual
+
+Sin ningún dataset externo, solo cruzando lo que ya está en la DB:
+- Detectar proveedores distintos con NITs consecutivos o con el mismo prefijo (señal de mismo dueño creando múltiples empresas)
+- Proveedor que gana contratos de una entidad y simultáneamente tiene contratos con 10+ entidades más en el mismo año
+- Grupos de proveedores que solo ganan contratos de la misma entidad compradora (red cerrada)
+
+Costo de implementación: 0 — puro SQL, los datos ya están.
 
 ---
 
