@@ -8,10 +8,11 @@ import { OmnisearchInput } from './omnisearch-input'
 import { MobileSearch } from './mobile-search'
 
 const navItems = [
-  { href: '/', label: 'Alertas' },
+  { href: '/alertas', label: 'Alertas' },
   { href: '/entidades', label: 'Entidades' },
   { href: '/proveedores', label: 'Proveedores' },
   { href: '/faq', label: 'Metodología' },
+  { href: '/', label: 'Home' },
 ]
 
 interface HeaderProps {
