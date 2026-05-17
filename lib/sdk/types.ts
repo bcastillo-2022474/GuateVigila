@@ -92,7 +92,6 @@ export interface Supplier {
   id: string
   name: string
   nit: string
-  industry: string
   totalContracts: number
   totalAwarded: number
   currency: string
@@ -208,7 +207,6 @@ export interface SupplierListItem {
   id: string
   name: string
   nit: string
-  industry: string
   totalContracts: number
   totalAwarded: number
   currency: string

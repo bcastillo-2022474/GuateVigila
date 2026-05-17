@@ -72,7 +72,7 @@ async function SupplierContent({ id, q, pageNum, aPageNum }: { id: string; q: st
           </nav>
           <h1 className="text-3xl font-bold mb-1">{supplier.name}</h1>
           <p className="text-base text-on-surface-variant">
-            NIT: {supplier.nit} • Proveedor de {supplier.industry}
+            NIT: {supplier.nit}
           </p>
         </div>
         <div className="flex gap-4">
