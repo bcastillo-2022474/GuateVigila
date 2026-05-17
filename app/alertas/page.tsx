@@ -8,7 +8,7 @@ import { Header } from '@/components/guatevigila/header'
 import { Footer } from '@/components/guatevigila/footer'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { StatsBar } from '@/components/guatevigila/stats-bar'
-import { AlertList } from '@/components/guatevigila/alert-list'
+import { AlertListClient } from '@/components/guatevigila/alert-list-client'
 
 interface PageProps {
   searchParams: Promise<{ signal?: string; year?: string; entity?: string; page?: string }>
@@ -49,7 +49,7 @@ async function AlertListLoader({
     entity: entity || undefined,
     page,
   })
-  return <AlertList result={result} signal={signal} year={year} entity={entity} />
+  return <AlertListClient initialResult={result} signal={signal} year={year} entity={entity} />
 }
 
 function StatsBarSkeleton() {

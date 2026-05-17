@@ -8,7 +8,7 @@ import { OmnisearchInput } from './omnisearch-input'
 import { MobileSearch } from './mobile-search'
 
 const navItems = [
-  { href: '/', label: 'Alertas' },
+  { href: '/alertas', label: 'Alertas' },
   { href: '/entidades', label: 'Entidades' },
   { href: '/proveedores', label: 'Proveedores' },
   { href: '/faq', label: 'Metodología' },
@@ -57,7 +57,7 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
 
           <nav className="hidden md:flex items-center gap-6">
             {navItems.map((item) => {
-              const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
+              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
               return (
                 <Link
                   key={item.href}
@@ -118,7 +118,7 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
 
         <nav className="flex flex-col px-4 py-6 gap-1">
           {navItems.map((item) => {
-            const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
             return (
               <Link
                 key={item.href}

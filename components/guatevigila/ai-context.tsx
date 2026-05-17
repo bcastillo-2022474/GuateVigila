@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 
 interface AIMatch {
@@ -38,14 +39,34 @@ export function useAIResults() {
 }
 
 export function AIResultsProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname()
   const [results, setResults] = useState<AISearchResponse | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [lastQuery, setLastQuery] = useState('')
+  const activeRequestRef = useRef<AbortController | null>(null)
+
+  const dismiss = useCallback(() => {
+    activeRequestRef.current?.abort()
+    activeRequestRef.current = null
+    setResults(null)
+    setLastQuery('')
+    setIsSearching(false)
+  }, [])
+
+  useEffect(() => {
+    if (pathname === '/alertas') return
+    dismiss()
+  }, [pathname, dismiss])
 
   const search = useCallback(async (query: string) => {
-    if (!query?.trim()) return
+    const normalizedQuery = query?.trim()
+    if (!normalizedQuery) return
 
-    setLastQuery(query)
+    activeRequestRef.current?.abort()
+    const controller = new AbortController()
+    activeRequestRef.current = controller
+
+    setLastQuery(normalizedQuery)
     setIsSearching(true)
     setResults(null)
 
@@ -53,23 +74,26 @@ export function AIResultsProvider({ children }: { children: ReactNode }) {
       const response = await fetch('/api/ai-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query: normalizedQuery }),
+        signal: controller.signal,
       })
 
       if (!response.ok) throw new Error('Search failed')
 
       const data = await response.json()
+      if (controller.signal.aborted) return
       setResults(data)
     } catch (error) {
+      if (controller.signal.aborted) return
       toast.error('No se pudo completar la búsqueda')
     } finally {
-      setIsSearching(false)
+      if (activeRequestRef.current === controller) {
+        activeRequestRef.current = null
+      }
+      if (!controller.signal.aborted) {
+        setIsSearching(false)
+      }
     }
-  }, [])
-
-  const dismiss = useCallback(() => {
-    setResults(null)
-    setLastQuery('')
   }, [])
 
   return (

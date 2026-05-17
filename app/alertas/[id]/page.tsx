@@ -8,6 +8,7 @@ import { SITE, SOCIAL } from '@/lib/constants/site'
 import { Header } from '@/components/guatevigila/header'
 import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { DraftSection } from '@/components/guatevigila/draft-section'
+import { AlertEvidenceGraph } from '@/components/guatevigila/alert-evidence-graph'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -135,6 +136,13 @@ async function AlertContent({ id }: { id: string }) {
             </span>
           </div>
         </div>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="text-xl font-semibold mb-6 border-b border-outline-variant pb-1">
+          Mapa de Evidencia
+        </h2>
+        <AlertEvidenceGraph alert={alert} />
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
