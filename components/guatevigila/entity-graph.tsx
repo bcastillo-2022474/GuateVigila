@@ -149,7 +149,7 @@ export function EntityGraph({ entity, suppliers }: EntityGraphProps) {
   )
 
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant" style={{ height: 520 }}>
+    <div className="bg-card border border-border" style={{ height: 520 }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -177,8 +177,8 @@ export function EntityGraph({ entity, suppliers }: EntityGraphProps) {
       </ReactFlow>
 
       {/* Legend */}
-      <div className="flex items-center gap-6 px-4 py-3 border-t border-outline-variant bg-surface-container-low">
-        <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Riesgo proveedor:</span>
+      <div className="flex items-center gap-6 px-4 py-3 border-t border-border bg-muted">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Riesgo proveedor:</span>
         {Object.entries(RISK_LABEL).map(([key, label]) => (
           <span key={key} className="flex items-center gap-1.5 text-xs font-medium" style={{ color: RISK_COLORS[key] }}>
             <span

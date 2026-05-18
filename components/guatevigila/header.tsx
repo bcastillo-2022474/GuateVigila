@@ -135,8 +135,8 @@ export function Header({ showBackButton, backHref = '/' }: HeaderProps) {
           })}
         </nav>
 
-        <div className="mt-auto px-6 py-6 border-t border-outline-variant">
-          <p className="text-[11px] text-on-surface-variant tracking-widest uppercase">GuateVigila © 2024</p>
+        <div className="mt-auto px-6 py-6 border-t border-primary/30">
+          <p className="text-[11px] text-primary-foreground/60 tracking-widest uppercase">GuateVigila © 2026</p>
         </div>
       </div>
     </>

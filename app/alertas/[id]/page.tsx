@@ -315,7 +315,7 @@ export default async function AlertDetailPage({ params }: PageProps) {
   const { id } = await params
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
+    <div className="min-h-screen bg-background">
       <Header showBackButton backHref="/" />
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-12">
         <Suspense fallback={<ContentSkeleton />}>

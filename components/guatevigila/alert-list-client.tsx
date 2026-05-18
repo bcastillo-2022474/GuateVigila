@@ -11,8 +11,6 @@ import {
 } from '@/components/ui/select'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useDebouncedCallback } from 'use-debounce'
-import { useAIResults } from '@/components/guatevigila/ai-context'
-import { AIResultsList } from '@/components/guatevigila/ai-results-list'
 import { AlertCard, SIGNAL_LABELS } from '@/components/guatevigila/alert-card'
 import type { PaginatedAlerts } from '@/lib/sdk/types'
 import {
@@ -46,40 +44,12 @@ function buildUrl(
   return qs ? `${pathname}?${qs}` : pathname
 }
 
-function SearchingAnimation() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 space-y-6">
-      <style>{`
-        @keyframes pulseRing {
-          0% { transform: scale(0.8); opacity: 1; }
-          100% { transform: scale(1.4); opacity: 0; }
-        }
-      `}</style>
-      <div className="relative">
-        <div className="w-20 h-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="material-symbols-outlined text-primary text-3xl animate-pulse">search</span>
-        </div>
-      </div>
-      <div className="text-center space-y-2">
-        <h2 className="text-xl font-semibold text-on-surface">Investigando patrones...</h2>
-        <p className="text-on-surface-variant">Analizando datos de Guatecompras</p>
-      </div>
-      <div className="flex items-center gap-3 text-on-surface-variant">
-        <span className="material-symbols-outlined animate-bounce">location_searching</span>
-        <span className="text-sm animate-pulse">Desenmascarando contratos...</span>
-        <span className="material-symbols-outlined animate-bounce" style={{ animationDelay: '200ms' }}>visibility</span>
-      </div>
-    </div>
-  )
-}
 
 export function AlertListClient({ initialResult, signal, year, entity }: AlertListClientProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [, startTransition] = useTransition()
-  const { results, isSearching } = useAIResults()
   const [inputEntity, setInputEntity] = useState(entity)
   const [alertsData, setAlertsData] = useState(initialResult)
 
@@ -132,14 +102,6 @@ export function AlertListClient({ initialResult, signal, year, entity }: AlertLi
   useEffect(() => {
     setInputEntity(entity)
   }, [entity])
-
-  if (isSearching) {
-    return <SearchingAnimation />
-  }
-
-  if (results) {
-    return <AIResultsList />
-  }
 
   return (
     <>

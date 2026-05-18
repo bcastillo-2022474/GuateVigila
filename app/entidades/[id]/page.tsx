@@ -110,7 +110,7 @@ export default async function EntityProfilePage({ params, searchParams }: PagePr
 
   return (
     // Agregamos el mismo fondo que el Home para mantener consistencia visual
-    <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
+    <div className="min-h-screen bg-background">
       <Header showBackButton backHref="/entidades" />
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-12 pt-20">

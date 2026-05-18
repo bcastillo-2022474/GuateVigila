@@ -80,7 +80,7 @@ export default async function AlertQueuePage({ searchParams }: PageProps) {
   const page = Math.max(1, parseInt(pageParam, 10) || 1)
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
+    <div className="min-h-screen bg-background">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

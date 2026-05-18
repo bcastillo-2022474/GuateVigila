@@ -89,7 +89,7 @@ Devuelve SOLO un objeto JSON válido (sin markdown, sin código, sin explicacion
 {
   "interpretation": "texto claro de lo que el usuario quiere buscar",
   "searchTerms": ["término1", "término2"],
-  "intent": "top_suppliers | top_entities | alerts | general",
+  "intent": "top_suppliers | top_entities | alerts | general | off_topic",
   "filters": {
     "entity": "nombre de entidad a buscar (o null)",
     "supplier": "nombre de proveedor a buscar (o null)",
@@ -101,7 +101,9 @@ Devuelve SOLO un objeto JSON válido (sin markdown, sin código, sin explicacion
 Ejemplos:
 - "proveedores con más contratos" → {"interpretation": "Buscar proveedores con mayor volumen de contratación", "searchTerms": ["proveedor", "contratos", "adjudicaciones"], "intent": "top_suppliers", "filters": {"entity": null, "supplier": null, "signal": null, "riskLevel": null}}
 - "top entidades por monto" → {"interpretation": "Entidades con mayor monto total adjudicado", "searchTerms": ["entidad", "monto", "adjudicaciones"], "intent": "top_entities", "filters": {"entity": null, "supplier": null, "signal": null, "riskLevel": null}}
-- "alertas críticas del Ministerio de Salud" → {"interpretation": "Alertas críticas de la entidad Ministerio de Salud", "searchTerms": ["Ministerio de Salud", "alertas"], "intent": "alerts", "filters": {"entity": "Ministerio de Salud", "supplier": null, "signal": null, "riskLevel": "critical"}}`,
+- "alertas críticas del Ministerio de Salud" → {"interpretation": "Alertas críticas de la entidad Ministerio de Salud", "searchTerms": ["Ministerio de Salud", "alertas"], "intent": "alerts", "filters": {"entity": "Ministerio de Salud", "supplier": null, "signal": null, "riskLevel": "critical"}}
+- "hola" → {"interpretation": "Saludo sin relación a contratación pública", "searchTerms": [], "intent": "off_topic", "filters": {}}
+- "qué tiempo hace" → {"interpretation": "Consulta no relacionada con contratación pública", "searchTerms": [], "intent": "off_topic", "filters": {}}`,
         },
         { role: 'user', content: query },
       ],
@@ -370,6 +372,15 @@ export async function POST(req: Request) {
 
     const { interpretation, searchTerms, filters, intent } = await interpretQuery(query, apiKey)
 
+    // Reject off-topic queries — don't dump random data
+    if (intent === 'off_topic' || (!searchTerms.length && intent === 'general')) {
+      return Response.json({
+        brief: 'Esta herramienta responde consultas sobre contratación pública guatemalteca. Intentá preguntar por una entidad, proveedor o tipo de alerta específica.',
+        matches: [],
+        queryInterpretation: interpretation,
+      })
+    }
+
     const allMatches: AIMatch[] = []
     const fetchPromises: Promise<AIMatch[]>[] = []
 
@@ -388,16 +399,6 @@ export async function POST(req: Request) {
     const results = await Promise.all(fetchPromises)
     for (const result of results) {
       allMatches.push(...result)
-    }
-
-    if (allMatches.length === 0) {
-      const fallback = await Promise.all([
-        fetchEntities(null),
-        fetchSuppliers(null, 'top_suppliers'),
-      ])
-      for (const f of fallback) {
-        allMatches.push(...f)
-      }
     }
 
     const enrichedMatches = await Promise.all(

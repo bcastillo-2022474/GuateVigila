@@ -68,7 +68,7 @@ export function OmnisearchInput() {
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         placeholder="Buscar entidades, proveedores o alertas..."
-        className="w-full pl-10 pr-4 py-2 bg-primary/10 backdrop-blur-sm border border-outline-variant focus:outline-none focus:border-primary text-primary-foreground placeholder:text-primary-foreground/70 text-sm rounded-sm"
+        className="w-full pl-10 pr-4 py-2 bg-primary/10 backdrop-blur-sm border border-primary/30 focus:outline-none focus:border-primary text-primary-foreground placeholder:text-primary-foreground/70 text-sm rounded-sm"
         autoComplete="off"
         role="combobox"
         aria-expanded={isOpen}

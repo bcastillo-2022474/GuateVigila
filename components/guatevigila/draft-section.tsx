@@ -87,7 +87,7 @@ export function DraftSection({
         <button
           onClick={copyDraft}
           disabled={!draft}
-          className="border border-outline-variant px-6 py-2 text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors disabled:opacity-40"
+          className="border border-border px-6 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40"
         >
           Copiar al portapapeles
         </button>
@@ -96,7 +96,7 @@ export function DraftSection({
       <textarea
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        className="w-full min-h-[260px] border border-outline-variant bg-surface-container-lowest p-4 text-sm text-on-surface leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+        className="w-full min-h-[260px] border border-border bg-card p-4 text-sm text-foreground leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
     </div>
   )

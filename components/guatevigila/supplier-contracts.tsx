@@ -70,16 +70,16 @@ export function SupplierContracts({ result, initialQ }: SupplierContractsProps) 
   return (
     <section className="mt-20">
       <h2 className="text-xl font-semibold mb-6">Contratos por entidad</h2>
-      <div className="bg-surface-container-lowest border border-outline-variant overflow-hidden">
-        <div className="px-4 py-3 border-b border-outline-variant">
+      <div className="bg-card border border-border overflow-hidden">
+        <div className="px-4 py-3 border-b border-border">
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               value={inputQ}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Buscar entidad..."
-              className="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full pl-10 pr-4 py-2 bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>
@@ -87,23 +87,23 @@ export function SupplierContracts({ result, initialQ }: SupplierContractsProps) 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-surface-container-low border-b border-outline-variant">
-                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface">Entidad</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface">Contratos</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface">Monto Total</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface">Riesgo</th>
+              <tr className="bg-muted border-b border-border">
+                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-foreground">Entidad</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-foreground">Contratos</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-foreground">Monto Total</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-foreground">Riesgo</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant">
+            <tbody className="divide-y divide-border">
               {contracts.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-sm text-on-surface">
+                  <td colSpan={4} className="px-6 py-10 text-center text-sm text-foreground">
                     No se encontraron entidades con ese nombre.
                   </td>
                 </tr>
               ) : (
                 contracts.map((c) => (
-                  <tr key={c.id} className="hover:bg-surface-container-low transition-colors">
+                  <tr key={c.id} className="hover:bg-muted transition-colors">
                     <td className="px-6 py-4 text-base">
                       <Link href={`/entidades/${c.entityId}`} className="hover:text-primary hover:underline">
                         {c.entityName}
@@ -119,8 +119,8 @@ export function SupplierContracts({ result, initialQ }: SupplierContractsProps) 
           </table>
         </div>
 
-        <div className="flex flex-col items-center gap-3 px-4 py-4 border-t border-outline-variant">
-          <p className="text-xs text-on-surface">
+        <div className="flex flex-col items-center gap-3 px-4 py-4 border-t border-border">
+          <p className="text-xs text-foreground">
             {total === 0
               ? 'Sin resultados'
               : `Mostrando ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} de ${total} entidades`}

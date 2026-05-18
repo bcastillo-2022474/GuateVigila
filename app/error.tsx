@@ -21,10 +21,10 @@ export default function GlobalError({
         <span className="material-symbols-outlined text-6xl text-destructive mb-6">
           error
         </span>
-        <h1 className="text-3xl font-bold text-on-surface tracking-tight mb-2">
+        <h1 className="text-3xl font-bold text-foreground tracking-tight mb-2">
           Algo salió mal
         </h1>
-        <p className="text-on-surface-variant max-w-md mb-10">
+        <p className="text-muted-foreground max-w-md mb-10">
           Ocurrió un error inesperado. Podés intentar de nuevo o volver al inicio.
         </p>
         <div className="flex gap-4">
@@ -37,14 +37,14 @@ export default function GlobalError({
           </button>
           <a
             href="/"
-            className="flex items-center gap-2 px-6 py-3 border border-outline-variant text-on-surface text-sm font-semibold hover:bg-surface-container-low transition-colors"
+            className="flex items-center gap-2 px-6 py-3 border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors"
           >
             <span className="material-symbols-outlined text-base">arrow_back</span>
             Volver al inicio
           </a>
         </div>
         {error.digest && (
-          <p className="mt-8 text-xs text-on-surface-variant font-mono">
+          <p className="mt-8 text-xs text-muted-foreground font-mono">
             Error ID: {error.digest}
           </p>
         )}

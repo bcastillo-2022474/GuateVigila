@@ -79,7 +79,7 @@ export default function HomePage() {
   const currentData = graphPreviewData[activeNode]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
+    <div className="min-h-screen bg-background">
       <Header />
 
       {/* Hero Section */}

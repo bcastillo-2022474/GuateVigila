@@ -92,12 +92,12 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
 
       {/* Spending Chart */}
       <section className="mb-12">
-        <div className="bg-surface-container-lowest border border-outline-variant p-6">
+        <div className="bg-card border border-border p-6">
           <div className="flex justify-between items-end mb-6">
             <h2 className="text-xl font-semibold text-primary">Histórico de Adjudicaciones</h2>
-            <span className="text-xs font-semibold text-on-surface-variant">Millones de Quetzales</span>
+            <span className="text-xs font-semibold text-muted-foreground">Millones de Quetzales</span>
           </div>
-          <div className="flex items-end gap-4 h-48 w-full border-b border-outline-variant pb-1">
+          <div className="flex items-end gap-4 h-48 w-full border-b border-border pb-1">
             {entity.yearlyData.map((data, idx) => {
               const heightPercent = maxAmount > 0 ? (data.amount / maxAmount) * 100 : 0
               const isLatest = idx === entity.yearlyData.length - 1
@@ -123,7 +123,7 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
             {entity.yearlyData.map((data, idx) => {
               const isLatest = idx === entity.yearlyData.length - 1
               return (
-                <span key={data.year} className={`text-[11px] ${isLatest ? 'text-primary font-bold' : 'text-on-surface-variant'}`}>
+                <span key={data.year} className={`text-[11px] ${isLatest ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                   {data.year}
                 </span>
               )
@@ -134,11 +134,11 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
 
       {/* Tabs */}
       <section className="mb-12">
-        <div className="flex items-center gap-0 border-b border-outline-variant mb-0">
+        <div className="flex items-center gap-0 border-b border-border mb-0">
           <button
             onClick={() => setActiveTab('tabla')}
             className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors border-b-2 -mb-px ${
-              activeTab === 'tabla' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-primary'
+              activeTab === 'tabla' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-primary'
             }`}
           >
             <span className="material-symbols-outlined text-base align-middle mr-1.5" style={{ fontSize: 16 }}>table_rows</span>
@@ -147,27 +147,27 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
           <button
             onClick={() => setActiveTab('grafo')}
             className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors border-b-2 -mb-px flex items-center gap-1.5 ${
-              activeTab === 'grafo' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-primary'
+              activeTab === 'grafo' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-primary'
             }`}
           >
             <span className="material-symbols-outlined align-middle" style={{ fontSize: 16 }}>hub</span>
             Vista de grafo
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-tertiary-container text-on-tertiary-container ml-1">BETA</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground ml-1">BETA</span>
           </button>
         </div>
 
         {activeTab === 'tabla' ? (
-          <div className="bg-surface-container-lowest border border-outline-variant border-t-0 overflow-hidden">
+          <div className="bg-card border border-border border-t-0 overflow-hidden">
             {/* Search */}
-            <div className="px-4 py-3 border-b border-outline-variant">
+            <div className="px-4 py-3 border-b border-border">
               <div className="relative max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
                   value={inputQ}
                   onChange={(e) => handleSearch(e.target.value)}
                   placeholder="Buscar proveedor..."
-                  className="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full pl-10 pr-4 py-2 bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -175,23 +175,23 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-surface-container-low border-b border-outline-variant">
-                    <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Proveedor</th>
-                    <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Contratos</th>
-                    <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Monto Total</th>
-                    <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-on-surface-variant">Riesgo</th>
+                  <tr className="bg-muted border-b border-border">
+                    <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-muted-foreground">Proveedor</th>
+                    <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-muted-foreground">Contratos</th>
+                    <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-muted-foreground">Monto Total</th>
+                    <th className="px-6 py-4 text-xs font-semibold tracking-widest uppercase text-muted-foreground">Riesgo</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant">
+                <tbody className="divide-y divide-border">
                   {suppliers.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-10 text-center text-sm text-on-surface-variant">
+                      <td colSpan={4} className="px-6 py-10 text-center text-sm text-muted-foreground">
                         No se encontraron proveedores con ese nombre.
                       </td>
                     </tr>
                   ) : (
                     suppliers.map((supplier) => (
-                      <tr key={supplier.id} className="hover:bg-surface-container-low transition-colors">
+                      <tr key={supplier.id} className="hover:bg-muted transition-colors">
                         <td className="px-6 py-4 text-base">
                           <Link href={`/proveedores/${encodeURIComponent(supplier.supplierId)}`} className="hover:text-primary hover:underline">
                             {supplier.supplierName}
@@ -212,8 +212,8 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
             </div>
 
             {/* Footer: count + pagination */}
-            <div className="flex flex-col items-center gap-3 px-4 py-4 border-t border-outline-variant">
-              <p className="text-xs text-on-surface-variant">
+            <div className="flex flex-col items-center gap-3 px-4 py-4 border-t border-border">
+              <p className="text-xs text-muted-foreground">
                 {total === 0
                   ? 'Sin resultados'
                   : `Mostrando ${(page - 1) * suppliersResult.pageSize + 1}–${Math.min(page * suppliersResult.pageSize, total)} de ${total} proveedores`}
@@ -272,7 +272,7 @@ export function EntityDetailTabs({ entity, suppliersResult, initialQ }: EntityDe
           href={entitySearchUrl(entity.name)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-xs font-semibold tracking-widest uppercase text-on-surface-variant hover:text-primary transition-colors border border-outline-variant px-6 py-4"
+          className="flex items-center gap-1 text-xs font-semibold tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors border border-border px-6 py-4"
         >
           Ver todos en Guatecompras
           <span className="material-symbols-outlined text-base">north_east</span>

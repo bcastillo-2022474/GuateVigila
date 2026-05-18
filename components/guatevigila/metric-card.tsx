@@ -20,8 +20,8 @@ export function MetricCard({
     'text-primary'
 
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant p-6 flex flex-col justify-between h-32">
-      <span className="text-xs font-semibold tracking-widest uppercase text-on-surface">
+    <div className="bg-card border border-border p-6 flex flex-col justify-between h-32">
+      <span className="text-xs font-semibold tracking-widest uppercase text-foreground">
         {label}
       </span>
       <div className="flex items-center gap-2">
@@ -37,7 +37,7 @@ export function MetricCard({
         )}
       </div>
       {subtitle && (
-        <span className="text-sm text-on-surface">{subtitle}</span>
+        <span className="text-sm text-foreground">{subtitle}</span>
       )}
     </div>
   )

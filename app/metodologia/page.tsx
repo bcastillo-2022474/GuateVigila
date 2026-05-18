@@ -65,7 +65,7 @@ const signals = [
 export default function MetodologiaPage() {
   return (
     // Agregado el mismo degradado de la Home para dar consistencia visual
-    <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
+    <div className="min-h-screen bg-background">
       {/* Header (Misma estructura que el Home pero con botón de retroceso) */}
       <header className="bg-primary border-b border-primary/30 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">

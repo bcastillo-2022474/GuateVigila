@@ -116,7 +116,7 @@ export default async function ProveedoresPage({ searchParams }: PageProps) {
   const initialPage = Math.max(1, parseInt(page ?? '1', 10) || 1)
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
+    <div className="min-h-screen bg-background">
       <Header />
       <Suspense fallback={<StatsBarSkeleton />}>
         <StatsBarLoader />

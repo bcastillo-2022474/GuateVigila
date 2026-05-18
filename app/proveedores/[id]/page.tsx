@@ -253,7 +253,7 @@ export default async function SupplierProfilePage({ params, searchParams }: Page
   const aPageNum = Math.max(1, parseInt(aPageParam ?? '1', 10) || 1)
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
+    <div className="min-h-screen bg-background">
       <Header showBackButton backHref="/proveedores" />
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-12">
