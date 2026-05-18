@@ -21,54 +21,22 @@ const SIGNAL_ICONS: Record<string, string> = {
   failed_tenders: 'event_busy',
 }
 
-function getRiskConfig(riskLevel: RiskLevel): { 
+function getRiskConfig(riskLevel: RiskLevel): {
   label: string
-  bg: string
-  text: string
-  border: string
-  indicator: string
+  badgeClass: string
+  indicatorClass: string
 } {
   switch (riskLevel) {
     case 'critical':
-      return {
-        label: 'Crítico',
-        bg: 'bg-red-500/10',
-        text: 'text-red-600 dark:text-red-400',
-        border: 'border-red-500/20',
-        indicator: 'bg-red-500',
-      }
+      return { label: 'Crítico', badgeClass: 'bg-red-500/10 text-red-600 border-red-500/30 border', indicatorClass: 'bg-red-500' }
     case 'high':
-      return {
-        label: 'Alto',
-        bg: 'bg-orange-500/10',
-        text: 'text-orange-600 dark:text-orange-400',
-        border: 'border-orange-500/20',
-        indicator: 'bg-orange-500',
-      }
+      return { label: 'Alto', badgeClass: 'bg-orange-500/10 text-orange-600 border-orange-500/30 border', indicatorClass: 'bg-orange-500' }
     case 'medium':
-      return {
-        label: 'Medio',
-        bg: 'bg-amber-500/10',
-        text: 'text-amber-600 dark:text-amber-400',
-        border: 'border-amber-500/20',
-        indicator: 'bg-amber-500',
-      }
+      return { label: 'Medio', badgeClass: 'bg-amber-500/10 text-amber-600 border-amber-500/30 border', indicatorClass: 'bg-amber-500' }
     case 'low':
-      return {
-        label: 'Bajo',
-        bg: 'bg-emerald-500/10',
-        text: 'text-emerald-600 dark:text-emerald-400',
-        border: 'border-emerald-500/20',
-        indicator: 'bg-emerald-500',
-      }
+      return { label: 'Bajo', badgeClass: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30 border', indicatorClass: 'bg-emerald-500' }
     default:
-      return {
-        label: riskLevel,
-        bg: 'bg-muted',
-        text: 'text-muted-foreground',
-        border: 'border-border',
-        indicator: 'bg-muted-foreground',
-      }
+      return { label: riskLevel, badgeClass: 'bg-muted text-muted-foreground border border-border', indicatorClass: 'bg-muted-foreground' }
   }
 }
 
@@ -86,7 +54,7 @@ export function AlertCard({ alert }: AlertCardProps) {
     <Link href={`/alertas/${alert.id}`} className="block group">
       <article className="relative bg-card border border-border rounded-lg overflow-hidden hover:border-foreground/20 hover:shadow-md transition-all duration-200">
         {/* Risk indicator bar */}
-        <div className={`absolute left-0 top-0 bottom-0 w-1 ${risk.indicator}`} />
+        <div className={`absolute left-0 top-0 bottom-0 w-1 ${risk.indicatorClass}`} />
         
         <div className="p-5 pl-6">
           {/* Header: Entity name + Risk badge */}
@@ -108,8 +76,8 @@ export function AlertCard({ alert }: AlertCardProps) {
             </div>
             
             {/* Risk badge */}
-            <div className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${risk.bg} ${risk.text} ${risk.border} border`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${risk.indicator}`} />
+            <div className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${risk.badgeClass}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${risk.indicatorClass}`} />
               {risk.label}
             </div>
           </div>
@@ -122,10 +90,10 @@ export function AlertCard({ alert }: AlertCardProps) {
                 <span
                   key={s}
                   title={SIGNAL_LABELS[s]}
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase rounded transition-colors ${
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase rounded transition-colors ${
                     isActive
-                      ? 'bg-foreground/10 text-foreground border border-foreground/20'
-                      : 'bg-muted/50 text-muted-foreground border border-transparent hover:bg-muted'
+                      ? 'bg-foreground text-background'
+                      : 'bg-muted text-foreground/70 border border-border'
                   }`}
                 >
                   <span className="material-symbols-outlined text-xs">{SIGNAL_ICONS[s]}</span>
