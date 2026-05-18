@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Shield, Search, FileText, AlertTriangle, TrendingUp, Network, Building2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Header } from '@/components/guatevigila/header'
 
 const signals = [
   {
@@ -80,34 +80,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/5 via-background to-secondary/5">
-      {/* Header */}
-      <header className="bg-primary border-b border-primary/30 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image src="/guate-vigila-black.svg" alt="GuateVigila" width={28} height={28} priority style={{ height: 'auto' }} />
-            <span className="text-lg font-bold tracking-tight text-primary-foreground">GuateVigila</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-primary-foreground/90">
-            <Link href="/metodologia" className="hover:text-primary-foreground transition-colors">
-              Metodología
-            </Link>
-            <Link 
-              href="https://datos.minfin.gob.gt/dataset/ocds-guatecompras" 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-primary-foreground transition-colors"
-            >
-              Datos Abiertos
-            </Link>
-          </nav>
-          <Button asChild size="sm">
-            <Link href="/alertas" className="text-primary-foreground">
-              Ver Alertas
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="py-20 md:py-32">
