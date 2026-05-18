@@ -10,6 +10,7 @@ import { AIAssistantButton } from '@/components/guatevigila/ai-assistant-button'
 import { DraftSection } from '@/components/guatevigila/draft-section'
 import { AlertEvidenceGraph } from '@/components/guatevigila/alert-evidence-graph'
 import { DownloadReportButton } from '@/components/guatevigila/download-report-button'
+import { AlertShareButton } from '@/components/guatevigila/alert-share-button'
 import { 
   AlertTriangle, 
   Clock, 
@@ -169,7 +170,10 @@ async function AlertContent({ id }: { id: string }) {
               </span>
             </div>
           </div>
-          <DownloadReportButton alert={alert} />
+          <div className="flex flex-col gap-2">
+            <DownloadReportButton alert={alert} />
+            <AlertShareButton alert={alert} />
+          </div>
         </div>
       </section>
 
