@@ -92,9 +92,9 @@ function getRiskVisuals(riskLevel: RiskLevel) {
     default:
       return {
         label: 'Riesgo Bajo',
-        textClass: 'text-blue-600',
-        bgClass: 'bg-blue-500/10 border-blue-500/20',
-        ringColor: '#3b82f6',
+        textClass: 'text-green-600',
+        bgClass: 'bg-green-500/10 border-green-500/20',
+        ringColor: '#1cdb28',
       }
   }
 }
@@ -134,7 +134,7 @@ async function AlertContent({ id }: { id: string }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      
+
       {/* SECCIÓN RESUMEN ENTRADA */}
       <section className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-12 border-b border-border/60 pb-8">
         <div className="max-w-2xl">
@@ -144,7 +144,7 @@ async function AlertContent({ id }: { id: string }) {
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-3">{alert.entityName}</h1>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed">{alert.description}</p>
         </div>
-        
+
         {/* WIDGET DEL SCORE CIRCULAR */}
         <div className="flex items-center gap-6 bg-card border border-border rounded-2xl p-6 shadow-sm min-w-[340px] justify-between">
           <div className="flex items-center gap-4">
@@ -190,7 +190,7 @@ async function AlertContent({ id }: { id: string }) {
       {/* SEÑALES DETECTADAS E INFORME IA */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-8 flex flex-col gap-12">
-          
+
           <section>
             <h2 className="text-lg font-bold text-foreground mb-4">Señales de Alerta Activas</h2>
             <div className="grid grid-cols-1 gap-4">
@@ -240,7 +240,7 @@ async function AlertContent({ id }: { id: string }) {
                 NIT: {alert.involvedSupplier.nit}
               </p>
             </div>
-            
+
             <div className="mb-6 bg-secondary/20 p-4 rounded-lg border border-border/40">
               <span className="text-[10px] font-bold text-muted-foreground block uppercase tracking-wider mb-1">
                 Monto Adjudicado Compilado ({alert.involvedSupplier.year})
@@ -249,7 +249,7 @@ async function AlertContent({ id }: { id: string }) {
                 {formatCurrency(alert.involvedSupplier.totalAwarded)}
               </span>
             </div>
-            
+
             <div className="flex flex-col gap-2">
               {alert.guatecomprasUrl && (
                 <a

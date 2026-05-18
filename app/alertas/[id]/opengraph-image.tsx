@@ -7,12 +7,11 @@ export const alt = 'Alerta Pericial — GuateVigila'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-// Pertenencia cromática de alta definición
 const RISK_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   critical: { bg: '#ef4444', text: '#ffffff', label: 'RIESGO CRÍTICO' },
   high:     { bg: '#f97316', text: '#ffffff', label: 'RIESGO ALTO' },
   medium:   { bg: '#f59e0b', text: '#ffffff', label: 'RIESGO MEDIO' },
-  low:      { bg: '#10b981', text: '#ffffff', label: 'RIESGO BAJO' },
+  low:      { bg: '#1cdb28', text: '#ffffff', label: 'RIESGO BAJO' }, 
 }
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +32,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           height: 630,
           display: 'flex',
           flexDirection: 'column',
-          background: '#09090b', // Fondo zinc-950 OSINT
+          background: '#09090b', // Fondo Zinc-950 OSINT
           fontFamily: 'sans-serif',
           position: 'relative',
         }}

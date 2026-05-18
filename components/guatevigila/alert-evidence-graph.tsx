@@ -51,7 +51,7 @@ function getSeverityColors(severity: RiskLevel) {
     case 'medium':
       return { text: 'text-amber-600', bg: 'bg-amber-500/10', border: 'border-amber-500/30' }
     default:
-      return { text: 'text-blue-600', bg: 'bg-blue-500/10', border: 'border-blue-500/30' }
+      return { text: 'text-green-600', bg: 'bg-green-500/10', border: 'border-green-500/30' }
   }
 }
 
