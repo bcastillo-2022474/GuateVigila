@@ -92,7 +92,7 @@ export default function HomePage() {
               Metodología
             </Link>
             <Link 
-              href="https://datos.minfin.gob.gt/dataset/ocds-guatecompras" 
+              href="https://datos.minfin.gob.gt/dataset" 
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-primary-foreground transition-colors"
