@@ -67,10 +67,10 @@ export function MobileSearch({ onClose }: MobileSearchProps) {
       role="dialog"
       aria-modal="true"
       aria-label="Búsqueda"
-      className="fixed inset-0 z-50 bg-surface flex flex-col md:hidden"
+      className="fixed inset-0 z-50 bg-background flex flex-col md:hidden"
     >
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-outline-variant shrink-0">
-        <span className="material-symbols-outlined text-outline" aria-hidden="true">search</span>
+      <div className="flex items-center gap-3 px-4 h-16 border-b border-border shrink-0">
+        <span className="material-symbols-outlined text-muted-foreground" aria-hidden="true">search</span>
         <input
           ref={inputRef}
           type="text"
@@ -78,7 +78,7 @@ export function MobileSearch({ onClose }: MobileSearchProps) {
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Buscar entidades, proveedores o alertas..."
-          className="flex-1 bg-transparent focus:outline-none text-sm text-on-surface placeholder:text-on-surface-variant"
+          className="flex-1 bg-transparent focus:outline-none text-sm text-foreground placeholder:text-muted-foreground"
           autoComplete="off"
           role="combobox"
           aria-expanded={isOpen}
@@ -88,10 +88,10 @@ export function MobileSearch({ onClose }: MobileSearchProps) {
         />
         <button
           onClick={onClose}
-          className="p-1 rounded-sm hover:bg-surface-container-low transition-colors"
+          className="p-1 rounded-sm hover:bg-muted transition-colors"
           aria-label="Cerrar búsqueda"
         >
-          <span className="material-symbols-outlined text-on-surface">close</span>
+          <span className="material-symbols-outlined text-foreground">close</span>
         </button>
       </div>
 
@@ -102,7 +102,7 @@ export function MobileSearch({ onClose }: MobileSearchProps) {
         className="flex-1 overflow-y-auto overscroll-contain"
       >
         {loading ? (
-          <p role="status" className="px-4 py-8 text-sm text-on-surface-variant text-center">Buscando...</p>
+          <p role="status" className="px-4 py-8 text-sm text-muted-foreground text-center">Buscando...</p>
         ) : results.length > 0 ? (
           results.map((result, i) => (
             <SearchResultRow
@@ -113,13 +113,13 @@ export function MobileSearch({ onClose }: MobileSearchProps) {
               onSelect={() => { navigate(result.href); onClose() }}
               onMouseEnter={() => setKeyboardIndex(i)}
               onMouseLeave={() => setKeyboardIndex(-1)}
-              className={`py-4 active:bg-surface-container-high ${i > 0 ? 'border-t border-outline-variant' : ''}`}
+              className={`py-4 active:bg-secondary ${i > 0 ? 'border-t border-border' : ''}`}
             />
           ))
         ) : isOpen ? (
-          <p role="status" className="px-4 py-8 text-sm text-on-surface-variant text-center">Sin resultados para &ldquo;{q}&rdquo;</p>
+          <p role="status" className="px-4 py-8 text-sm text-muted-foreground text-center">Sin resultados para &ldquo;{q}&rdquo;</p>
         ) : (
-          <p className="px-4 py-8 text-sm text-on-surface-variant text-center">Escribe al menos 2 caracteres para buscar</p>
+          <p className="px-4 py-8 text-sm text-muted-foreground text-center">Escribe al menos 2 caracteres para buscar</p>
         )}
       </div>
     </div>

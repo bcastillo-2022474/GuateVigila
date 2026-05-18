@@ -20,9 +20,14 @@ function displayNit(ocdsId: string): string {
 export async function getSuppliers(filters: SupplierFilters = {}): Promise<PaginatedSupplierList> {
   const page = Math.max(1, filters.page ?? 1)
   const offset = (page - 1) * PAGE_SIZE_LIST
-  const searchClause = filters.q?.trim()
-    ? `AND s.name ILIKE '%${filters.q.trim().replace(/'/g, "''")}%'`
-    : ''
+  const qRaw = filters.q?.trim()
+  const qSafe = qRaw?.replace(/'/g, "''") ?? ''
+  const searchClause = qRaw ? `
+    AND (
+      s.name ILIKE '%${qSafe}%'
+      OR s.id ILIKE '%${qSafe}%'
+      OR word_similarity('${qSafe}', s.name) > 0.25
+    )` : ''
 
   const [totalRows, rows] = await Promise.all([
     query<{ total: number; total_contracts: number; high_risk_suppliers: number }>(`
@@ -71,7 +76,7 @@ export async function getSuppliers(filters: SupplierFilters = {}): Promise<Pagin
       WHERE EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
         ${searchClause}
       GROUP BY s.id
-      ORDER BY total_amount DESC
+      ORDER BY ${qRaw ? `MAX(word_similarity('${qSafe}', s.name)) DESC,` : ''} total_amount DESC
       LIMIT ${PAGE_SIZE_LIST} OFFSET ${offset}
     `),
   ])

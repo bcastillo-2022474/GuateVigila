@@ -226,7 +226,10 @@ export async function getAlertsPage(filters: AlertListFilters = {}): Promise<Pag
   if (filters.signal && SIGNAL_PRIORITY.includes(filters.signal as SignalType))
     conditions.push(`has_${filters.signal} = true`)
   if (filters.year)    conditions.push(`latest_year = ${parseInt(filters.year, 10)}`)
-  if (filters.entity)  conditions.push(`buyer_name ILIKE ${escapeLiteral(`%${filters.entity}%`)}`)
+  if (filters.entity) {
+    const eSafe = filters.entity.replace(/'/g, "''")
+    conditions.push(`(buyer_name ILIKE '%${eSafe}%' OR supplier_name ILIKE '%${eSafe}%' OR word_similarity('${eSafe}', buyer_name) > 0.25 OR word_similarity('${eSafe}', supplier_name) > 0.25)`)
+  }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
 

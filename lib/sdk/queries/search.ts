@@ -40,14 +40,15 @@ export async function search(q: string): Promise<SearchResult[]> {
       JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
       WHERE (
         m.buyer_name ILIKE ${likeAny}
+        OR m.buyer_id ILIKE ${likeAny}
         OR similarity(m.buyer_name, ${lit}) > 0.15
-        OR word_similarity(${lit}, m.buyer_name) > 0.25
+        OR word_similarity(${lit}, m.buyer_name) > 0.2
       )
         AND m.buyer_id IS NOT NULL
         AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
       GROUP BY m.buyer_id, m.buyer_name
       ORDER BY relevance DESC, total_amount DESC
-      LIMIT 5
+      LIMIT 4
     ),
 
     suppliers AS (
@@ -67,13 +68,14 @@ export async function search(q: string): Promise<SearchResult[]> {
       JOIN main m   ON m.ocid = a.main_ocid
       WHERE (
         s.name ILIKE ${likeAny}
+        OR s.id ILIKE ${likeAny}
         OR similarity(s.name, ${lit}) > 0.15
-        OR word_similarity(${lit}, s.name) > 0.25
+        OR word_similarity(${lit}, s.name) > 0.2
       )
         AND EXTRACT(year FROM m."tender_tenderPeriod_startDate") > 2000
       GROUP BY s.id
       ORDER BY relevance DESC, total_amount DESC
-      LIMIT 5
+      LIMIT 4
     ),
 
     alerts AS (
@@ -94,13 +96,15 @@ export async function search(q: string): Promise<SearchResult[]> {
       WHERE (
         buyer_name ILIKE ${likeAny}
         OR supplier_name ILIKE ${likeAny}
+        OR buyer_id ILIKE ${likeAny}
+        OR supplier_id ILIKE ${likeAny}
         OR similarity(buyer_name, ${lit}) > 0.15
-        OR word_similarity(${lit}, buyer_name) > 0.25
+        OR word_similarity(${lit}, buyer_name) > 0.2
         OR similarity(supplier_name, ${lit}) > 0.15
-        OR word_similarity(${lit}, supplier_name) > 0.25
+        OR word_similarity(${lit}, supplier_name) > 0.2
       )
       ORDER BY relevance DESC, risk_score DESC, total_amount DESC
-      LIMIT 5
+      LIMIT 4
     ),
 
     combined AS (
@@ -112,7 +116,7 @@ export async function search(q: string): Promise<SearchResult[]> {
     SELECT *
     FROM combined
     ORDER BY relevance DESC, total_amount DESC
-    LIMIT 8
+    LIMIT 10
   `)
 
   return rows.map((row) => {

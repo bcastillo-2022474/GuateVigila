@@ -48,9 +48,14 @@ export async function getEntities(filters: EntityFilters = {}): Promise<Paginate
   const page = Math.max(1, filters.page ?? 1)
   const offset = (page - 1) * PAGE_SIZE_LIST
 
-  const searchClause = filters.q?.trim()
-    ? `AND m.buyer_name ILIKE '%${filters.q.trim().replace(/'/g, "''")}%'`
-    : ''
+  const qRaw = filters.q?.trim()
+  const qSafe = qRaw?.replace(/'/g, "''") ?? ''
+  const searchClause = qRaw ? `
+    AND (
+      m.buyer_name ILIKE '%${qSafe}%'
+      OR m.buyer_id ILIKE '%${qSafe}%'
+      OR word_similarity('${qSafe}', m.buyer_name) > 0.25
+    )` : ''
 
   const typeNames: Record<string, string[]> = {
     municipalidad: ['MUNICIPALIDAD', 'MANCOMUNIDAD'],
@@ -107,7 +112,7 @@ export async function getEntities(filters: EntityFilters = {}): Promise<Paginate
       JOIN awards a ON a.main_ocid = m.ocid AND a.status = 'active'
       ${baseWhere}
       GROUP BY m.buyer_id, m.buyer_name
-      ORDER BY total_amount DESC
+      ORDER BY ${qRaw ? `word_similarity('${qSafe}', m.buyer_name) DESC,` : ''} total_amount DESC
       LIMIT ${PAGE_SIZE_LIST} OFFSET ${offset}
     `),
 

@@ -78,31 +78,32 @@ export function OmnisearchInput() {
       />
 
       {isOpen && (
-<div className="absolute top-full left-0 right-0 mt-1 bg-zinc-100 border border-zinc-300 shadow-lg z-50 rounded-sm overflow-hidden">        {loading ? (
-          <p role="status" className="px-4 py-3 text-sm text-on-surface-variant">Buscando...</p>
-        ) : results.length === 0 ? (
-          <p role="status" className="px-4 py-3 text-sm text-on-surface-variant">Sin resultados</p>
-        ) : (
-          <div
-            ref={listboxRef}
-            id={listboxId}
-            role="listbox"
-            aria-label="Resultados de búsqueda"
-            className="overflow-y-auto max-h-[220px] overscroll-contain"
-          >
-            {results.map((result, i) => (
-              <SearchResultRow
-                key={result.id}
-                id={`${listboxId}-option-${i}`}
-                result={result}
-                isActive={i === keyboardIndex}
-                onSelect={() => navigate(result.href)}
-                onMouseEnter={() => setKeyboardIndex(i)}
-                className={i > 0 ? 'border-t border-outline-variant' : ''}
-              />
-            ))}
-          </div>
-        )}
+        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border shadow-lg z-50 rounded-sm overflow-hidden">
+          {loading ? (
+            <p role="status" className="px-4 py-3 text-sm text-muted-foreground">Buscando...</p>
+          ) : results.length === 0 ? (
+            <p role="status" className="px-4 py-3 text-sm text-muted-foreground">Sin resultados</p>
+          ) : (
+            <div
+              ref={listboxRef}
+              id={listboxId}
+              role="listbox"
+              aria-label="Resultados de búsqueda"
+              className="overflow-y-auto max-h-[220px] overscroll-contain"
+            >
+              {results.map((result, i) => (
+                <SearchResultRow
+                  key={result.id}
+                  id={`${listboxId}-option-${i}`}
+                  result={result}
+                  isActive={i === keyboardIndex}
+                  onSelect={() => navigate(result.href)}
+                  onMouseEnter={() => setKeyboardIndex(i)}
+                  className={i > 0 ? 'border-t border-border' : ''}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
